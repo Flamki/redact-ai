@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedactAI — Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__header">
+      <a href="index.html" class="navbar__logo">
+        <div class="navbar__logo-icon">R</div>
+        <div class="navbar__logo-text">Redact<span>AI</span></div>
+      </a>
+    </div>
+    <nav class="sidebar__nav">
+      <button class="sidebar__link active" data-page="overview" id="nav-overview">
+        <span class="sidebar__icon">📊</span> Overview
+      </button>
+      <button class="sidebar__link" data-page="scanner" id="nav-scanner">
+        <span class="sidebar__icon">🛡️</span> Scanner
+      </button>
+      <button class="sidebar__link" data-page="files" id="nav-files">
+        <span class="sidebar__icon">📁</span> File Upload
+      </button>
+      <button class="sidebar__link" data-page="history" id="nav-history">
+        <span class="sidebar__icon">📋</span> History
+      </button>
+      <button class="sidebar__link" data-page="api" id="nav-api">
+        <span class="sidebar__icon">🔑</span> API Keys
+      </button>
+      <button class="sidebar__link" data-page="settings" id="nav-settings">
+        <span class="sidebar__icon">⚙️</span> Settings
+      </button>
+    </nav>
+    <div class="sidebar__footer">
+      <div class="sidebar__plan">
+        <div class="sidebar__plan-label">Free Plan</div>
+        <div class="sidebar__plan-usage">
+          <div class="sidebar__plan-bar"><div class="sidebar__plan-fill" style="width:34%"></div></div>
+          <span>340 / 1,000 docs</span>
+        </div>
+        <button class="btn btn--primary btn--small" style="width:100%;justify-content:center;margin-top:10px;">Upgrade Plan</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar__left">
+        <button class="topbar__menu" id="menu-toggle">☰</button>
+        <h2 class="topbar__title" id="page-title">Overview</h2>
+      </div>
+      <div class="topbar__right">
+        <div class="topbar__search">
+          <span>🔍</span>
+          <input type="text" placeholder="Search..." id="global-search">
+        </div>
+        <button class="topbar__notif" id="notif-btn">🔔 <span class="topbar__badge">3</span></button>
+        <div class="topbar__user">
+          <div class="topbar__avatar">BK</div>
+          <span>Bbook</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== PAGE: OVERVIEW ===== -->
+    <div class="page active" id="page-overview">
+      <div class="dash-grid-4">
+        <div class="metric-card">
+          <div class="metric-card__icon" style="background:var(--accent-glow);color:var(--accent-light);">🔍</div>
+          <div class="metric-card__data">
+            <div class="metric-card__value" id="metric-scans">340</div>
+            <div class="metric-card__label">Total Scans</div>
+          </div>
+          <div class="metric-card__trend up">↑ 12%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card__icon" style="background:var(--danger-bg);color:var(--danger);">🚨</div>
+          <div class="metric-card__data">
+            <div class="metric-card__value" id="metric-pii">2,847</div>
+            <div class="metric-card__label">PII Detected</div>
+          </div>
+          <div class="metric-card__trend up">↑ 8%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card__icon" style="background:var(--success-bg);color:var(--success);">✅</div>
+          <div class="metric-card__data">
+            <div class="metric-card__value" id="metric-redacted">2,691</div>
+            <div class="metric-card__label">Auto-Redacted</div>
+          </div>
+          <div class="metric-card__trend up">↑ 15%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card__icon" style="background:var(--warning-bg);color:var(--warning);">⏱️</div>
+          <div class="metric-card__data">
+            <div class="metric-card__value">23ms</div>
+            <div class="metric-card__label">Avg Response</div>
+          </div>
+          <div class="metric-card__trend neutral">→ 0%</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="dash-grid-2">
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <h3>Scans Over Time</h3>
+            <select class="chart-select" id="chart-range">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </div>
+          <div class="chart-area" id="chart-scans">
+            <canvas id="canvas-scans"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <h3>PII Types Breakdown</h3>
+          </div>
+          <div class="chart-area" id="chart-types">
+            <div class="donut-chart" id="donut-chart"></div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT SCANS -->
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>Recent Scans</h3>
+          <button class="btn btn--ghost btn--small" onclick="switchPage('history')">View All →</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="recent-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Source</th>
+                <th>Entities Found</th>
+                <th>Types</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: SCANNER ===== -->
+    <div class="page" id="page-scanner">
+      <div class="app-card">
+        <div class="app-card__header">
+          <div class="app-card__title">🛡️ PII Scanner</div>
+          <div class="app-card__actions">
+            <div class="toggle-group">
+              <button class="toggle-group__btn active" data-mode="highlight">Highlight</button>
+              <button class="toggle-group__btn" data-mode="redact">Redact</button>
+            </div>
+            <button class="btn btn--ghost btn--small" id="scan-btn-sample">📝 Sample</button>
+            <button class="btn btn--ghost btn--small" id="scan-btn-clear">✕ Clear</button>
+            <button class="btn btn--primary btn--small" id="scan-btn-copy">📋 Copy Redacted</button>
+          </div>
+        </div>
+        <div class="editor-layout">
+          <div class="editor-pane">
+            <div class="editor-pane__label">📥 Input — Paste your text</div>
+            <textarea id="scan-input" placeholder="Paste text containing personal information here..."></textarea>
+          </div>
+          <div class="editor-pane">
+            <div class="editor-pane__label">📤 Output — Detected PII</div>
+            <div class="output-area" id="scan-output"></div>
+          </div>
+        </div>
+      </div>
+      <div class="entities-panel">
+        <div class="entities-panel__title">🔍 Detected Entities: <span id="scan-entity-count" style="color:var(--accent-light);">0</span></div>
+        <div class="entities-grid" id="scan-entities-grid"></div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: FILE UPLOAD ===== -->
+    <div class="page" id="page-files">
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>📁 Bulk File Processing</h3>
+          <span class="badge">Supports CSV, JSON, TXT</span>
+        </div>
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-zone__icon">📂</div>
+          <div class="upload-zone__title">Drag & drop files here</div>
+          <div class="upload-zone__desc">or click to browse — CSV, JSON, TXT up to 10MB</div>
+          <input type="file" id="file-input" accept=".csv,.json,.txt" multiple hidden>
+          <button class="btn btn--primary" id="browse-btn" style="margin-top:16px;">Browse Files</button>
+        </div>
+      </div>
+
+      <!-- File Queue -->
+      <div class="chart-card" id="file-queue-card" style="display:none;">
+        <div class="chart-card__header">
+          <h3>Processing Queue</h3>
+          <button class="btn btn--primary btn--small" id="process-all-btn">▶ Process All</button>
+        </div>
+        <div id="file-queue"></div>
+      </div>
+
+      <!-- File Results -->
+      <div class="chart-card" id="file-results-card" style="display:none;">
+        <div class="chart-card__header">
+          <h3>Results</h3>
+          <button class="btn btn--primary btn--small" id="download-all-btn">⬇ Download All Redacted</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>File</th><th>Size</th><th>PII Found</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="file-results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: HISTORY ===== -->
+    <div class="page" id="page-history">
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>📋 Scan History</h3>
+          <div style="display:flex;gap:8px;">
+            <select class="chart-select" id="history-filter">
+              <option value="all">All Types</option>
+              <option value="text">Text Scans</option>
+              <option value="file">File Scans</option>
+              <option value="api">API Scans</option>
+            </select>
+            <button class="btn btn--outline btn--small" id="export-history-btn">⬇ Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Date</th><th>Source</th><th>Input Preview</th><th>Entities</th><th>Types</th><th>Status</th></tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-pagination">
+          <button class="btn btn--ghost btn--small" id="prev-page">← Previous</button>
+          <span class="pagination-info" id="pagination-info">Page 1 of 5</span>
+          <button class="btn btn--ghost btn--small" id="next-page">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: API KEYS ===== -->
+    <div class="page" id="page-api">
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>🔑 API Keys</h3>
+          <button class="btn btn--primary btn--small" id="create-key-btn">+ Create New Key</button>
+        </div>
+        <p style="color:var(--text-secondary);margin-bottom:24px;">Use API keys to integrate RedactAI into your applications.</p>
+        <div id="api-keys-list"></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card__header"><h3>📖 Quick Start</h3></div>
+        <div class="code-block">
+          <div class="code-block__header">
+            <span>cURL</span>
+            <button class="btn btn--ghost btn--small" id="copy-curl">📋 Copy</button>
+          </div>
+          <pre class="code-block__body"><code>curl -X POST https://api.redact-ai.com/v1/scan \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "My name is Rahul Sharma, email: rahul@gmail.com",
+    "mode": "redact"
+  }'</code></pre>
+        </div>
+        <div class="code-block" style="margin-top:16px;">
+          <div class="code-block__header">
+            <span>Python</span>
+            <button class="btn btn--ghost btn--small" id="copy-python">📋 Copy</button>
+          </div>
+          <pre class="code-block__body"><code>import requests
+
+response = requests.post(
+    "https://api.redact-ai.com/v1/scan",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "text": "My name is Rahul Sharma, email: rahul@gmail.com",
+        "mode": "redact"
+    }
+)
+print(response.json())</code></pre>
+        </div>
+        <div class="code-block" style="margin-top:16px;">
+          <div class="code-block__header">
+            <span>Response</span>
+          </div>
+          <pre class="code-block__body"><code>{
+  "redacted": "My name is [NAME], email: [EMAIL]",
+  "entities": [
+    {"type": "name", "value": "Rahul Sharma", "start": 11, "end": 23},
+    {"type": "email", "value": "rahul@gmail.com", "start": 32, "end": 47}
+  ],
+  "count": 2,
+  "processing_ms": 18
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: SETTINGS ===== -->
+    <div class="page" id="page-settings">
+      <div class="dash-grid-2">
+        <div class="chart-card">
+          <div class="chart-card__header"><h3>👤 Profile</h3></div>
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" value="Bbook" id="setting-name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="bbook@example.com" id="setting-email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Organization</label>
+            <input type="text" class="form-input" placeholder="Your company name" id="setting-org">
+          </div>
+          <button class="btn btn--primary" style="margin-top:8px;">Save Changes</button>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card__header"><h3>🛡️ Detection Settings</h3></div>
+          <div class="form-group">
+            <label class="form-label">Detection Sensitivity</label>
+            <select class="form-input" id="sensitivity">
+              <option value="low">Low — fewer false positives</option>
+              <option value="medium" selected>Medium — balanced</option>
+              <option value="high">High — catch everything</option>
+            </select>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Email Addresses</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Phone Numbers</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Person Names</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Government IDs (Aadhaar, PAN, SSN)</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Credit Cards</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect IP Addresses</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Detect Dates of Birth</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <button class="btn btn--primary" style="margin-top:12px;">Save Settings</button>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card__header"><h3>⚠️ Danger Zone</h3></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:600;">Delete Account</div>
+            <div style="color:var(--text-secondary);font-size:14px;">Permanently delete your account and all data.</div>
+          </div>
+          <button class="btn btn--danger">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

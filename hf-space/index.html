@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RedactAI — Discover, scan and redact PII, PCI, and PHI from text, files and databases instantly. GDPR, HIPAA, DPDP compliant. Free to start, no install required.">
+  <title>RedactAI — Detect & Redact Sensitive Data Instantly | PII Scanner</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="landing.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--purple"></div>
+  <div class="bg-glow bg-glow--cyan"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="navbar__logo">
+        <div class="navbar__logo-icon">R</div>
+        <div class="navbar__logo-text">Redact<span>AI</span></div>
+      </a>
+      <ul class="navbar__links">
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#use-cases">Use Cases</a></li>
+        <li><a href="#demo">Live Demo</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="dashboard.html" class="btn btn--outline btn--small">Log In</a></li>
+        <li><a href="dashboard.html" class="btn btn--primary btn--small">Start Free →</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero__badge animate-in">
+        <span class="dot"></span>
+        No install required · Start scanning in 5 seconds
+      </div>
+      <h1 class="hero__title animate-in animate-delay-1">
+        Discover, Scan & Redact<br><span class="highlight">Sensitive Data</span> Instantly
+      </h1>
+      <p class="hero__subtitle animate-in animate-delay-2">
+        PII, PCI, PHI hiding in your text, files, or databases? RedactAI finds and removes it in seconds. Cloud-native, developer-friendly, and GDPR/HIPAA/DPDP compliant — with zero data stored.
+      </p>
+      <div class="hero__actions animate-in animate-delay-3">
+        <a href="dashboard.html" class="btn btn--primary btn--large">Start Scanning Free →</a>
+        <a href="#demo" class="btn btn--outline btn--large">▶ See Live Demo</a>
+      </div>
+      <p class="hero__trust-text animate-in animate-delay-3">No credit card required · Free forever up to 1,000 docs/month</p>
+
+      <div class="stats-bar animate-in animate-delay-3">
+        <div class="stat">
+          <div class="stat__value">12+</div>
+          <div class="stat__label">PII Types Detected</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value">99.2%</div>
+          <div class="stat__label">Detection Accuracy</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value">&lt;50ms</div>
+          <div class="stat__label">Avg Response Time</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value">0</div>
+          <div class="stat__label">Data Stored</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPLIANCE BADGES -->
+  <section class="compliance-bar">
+    <div class="container">
+      <div class="compliance-bar__inner">
+        <span class="compliance-badge">🇪🇺 GDPR</span>
+        <span class="compliance-badge">🏥 HIPAA</span>
+        <span class="compliance-badge">💳 PCI DSS</span>
+        <span class="compliance-badge">🇮🇳 DPDP Act</span>
+        <span class="compliance-badge">🔒 SOC 2</span>
+        <span class="compliance-badge">🇺🇸 CCPA</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">How It Works</div>
+        <h2 class="section__title">From Upload to Redaction in 3 Steps</h2>
+        <p class="section__desc">No installation. No VM. No Docker. Just paste, scan, and redact.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-card__number">01</div>
+          <div class="step-card__icon">🔍</div>
+          <h3 class="step-card__title">Discover</h3>
+          <p class="step-card__desc">Paste text, upload files (CSV, JSON, TXT, PDF), or hit our API. Our AI scans every character for personal and sensitive data.</p>
+        </div>
+        <div class="step-card__arrow">→</div>
+        <div class="step-card">
+          <div class="step-card__number">02</div>
+          <div class="step-card__icon">📊</div>
+          <h3 class="step-card__title">Analyze</h3>
+          <p class="step-card__desc">See exactly what was found — names, emails, phones, IDs, credit cards — with color-coded highlighting and entity breakdowns.</p>
+        </div>
+        <div class="step-card__arrow">→</div>
+        <div class="step-card">
+          <div class="step-card__number">03</div>
+          <div class="step-card__icon">🛡️</div>
+          <h3 class="step-card__title">Remediate</h3>
+          <p class="step-card__desc">One click to redact, mask, or pseudonymize. Export clean files, copy redacted text, or process in bulk via API.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="section section--alt" id="use-cases">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Use Cases</div>
+        <h2 class="section__title">When Do You Need RedactAI?</h2>
+      </div>
+
+      <div class="usecase-grid">
+        <div class="usecase-card">
+          <div class="usecase-card__icon">📋</div>
+          <h3>Audits & Compliance</h3>
+          <ul>
+            <li>Confirm no PII lives outside designated systems</li>
+            <li>Audit files, emails, DBs, and cloud storage</li>
+            <li>Meet GDPR, HIPAA, PCI DSS, DPDP requirements</li>
+            <li>Generate compliance reports automatically</li>
+          </ul>
+        </div>
+        <div class="usecase-card">
+          <div class="usecase-card__icon">🚨</div>
+          <h3>Breach Response</h3>
+          <ul>
+            <li>React fast — identify whose data was exposed</li>
+            <li>Scan millions of breached records in seconds</li>
+            <li>Generate detailed impact reports</li>
+            <li>Take actionable steps to prevent future breaches</li>
+          </ul>
+        </div>
+        <div class="usecase-card">
+          <div class="usecase-card__icon">🤖</div>
+          <h3>AI Data Protection</h3>
+          <ul>
+            <li>Scrub PII before feeding data into LLMs</li>
+            <li>Clean training datasets for ML models</li>
+            <li>Prevent AI from memorizing personal data</li>
+            <li>Stay audit-ready with processing logs</li>
+          </ul>
+        </div>
+        <div class="usecase-card">
+          <div class="usecase-card__icon">🔄</div>
+          <h3>Data Migration</h3>
+          <ul>
+            <li>Classify data before migrating to cloud</li>
+            <li>Cleanse storage of sensitive documents</li>
+            <li>Move PII files to restricted-access folders</li>
+            <li>Handle petabytes of legacy data efficiently</li>
+          </ul>
+        </div>
+        <div class="usecase-card">
+          <div class="usecase-card__icon">👨‍💼</div>
+          <h3>Consultants & MSPs</h3>
+          <ul>
+            <li>Assess security risk across all client data</li>
+            <li>Formulate service plans with concrete detections</li>
+            <li>Share interactive reports with clients</li>
+            <li>White-label available for agencies</li>
+          </ul>
+        </div>
+        <div class="usecase-card">
+          <div class="usecase-card__icon">💻</div>
+          <h3>Developer Workflows</h3>
+          <ul>
+            <li>Redact logs before developers access them</li>
+            <li>Clean test databases of production PII</li>
+            <li>CI/CD pipeline integration via REST API</li>
+            <li>Pre-commit hooks to catch accidental PII</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE DEMO -->
+  <section class="section" id="demo">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Live Demo</div>
+        <h2 class="section__title">Try It Right Now — No Signup Required</h2>
+        <p class="section__desc">Paste any text with personal information. Watch RedactAI detect and redact it instantly, right in your browser.</p>
+      </div>
+
+      <div class="app-card">
+        <div class="app-card__header">
+          <div class="app-card__title">🛡️ PII Scanner</div>
+          <div class="app-card__actions">
+            <div class="toggle-group">
+              <button class="toggle-group__btn active" data-mode="highlight">Highlight</button>
+              <button class="toggle-group__btn" data-mode="redact">Redact</button>
+            </div>
+            <button class="btn btn--ghost btn--small" id="btn-sample">📝 Sample</button>
+            <button class="btn btn--ghost btn--small" id="btn-clear">✕ Clear</button>
+            <button class="btn btn--primary btn--small" id="btn-copy">📋 Copy Redacted</button>
+          </div>
+        </div>
+        <div class="editor-layout">
+          <div class="editor-pane">
+            <div class="editor-pane__label">📥 Input — Paste your text</div>
+            <textarea id="pii-input" placeholder="Paste text containing personal information here...&#10;&#10;Try pasting a customer email, support ticket, or any text with names, emails, phone numbers, etc."></textarea>
+          </div>
+          <div class="editor-pane">
+            <div class="editor-pane__label">📤 Output — Detected PII</div>
+            <div class="output-area" id="pii-output"></div>
+          </div>
+        </div>
+      </div>
+      <div class="entities-panel">
+        <div class="entities-panel__title">🔍 Detected Entities: <span id="entity-count" style="color: var(--accent-light);">0</span></div>
+        <div class="entities-grid" id="entities-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT WE DETECT -->
+  <section class="section section--alt" id="features">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Detection Capabilities</div>
+        <h2 class="section__title">Detect 12+ Types of Sensitive Data</h2>
+        <p class="section__desc">From emails to Aadhaar numbers — RedactAI catches what others miss.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: var(--info-bg);">📧</div>
+          <h3 class="feature-card__title">Email Addresses</h3>
+          <p class="feature-card__desc">All formats including enterprise domains and plus-addressed emails.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: var(--success-bg);">📱</div>
+          <h3 class="feature-card__title">Phone Numbers</h3>
+          <p class="feature-card__desc">Indian (+91), US (+1), and international formats with various separators.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: rgba(244,114,182,0.15);">👤</div>
+          <h3 class="feature-card__title">Person Names</h3>
+          <p class="feature-card__desc">Smart detection covering Indian and Western names with context analysis.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: var(--danger-bg);">🆔</div>
+          <h3 class="feature-card__title">Government IDs</h3>
+          <p class="feature-card__desc">Aadhaar, PAN, SSN, Passport — all major ID formats across India and US.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: var(--warning-bg);">💳</div>
+          <h3 class="feature-card__title">Financial Data</h3>
+          <p class="feature-card__desc">Credit card numbers, bank references, and partial payment information.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon" style="background: rgba(34,211,238,0.15);">🌐</div>
+          <h3 class="feature-card__title">Network & Location</h3>
+          <p class="feature-card__desc">IP addresses, PIN/ZIP codes, and address patterns that reveal locations.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY US vs THEM -->
+  <section class="section" id="compare">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Why RedactAI</div>
+        <h2 class="section__title">Enterprise Power, Startup Speed</h2>
+        <p class="section__desc">Traditional PII tools need weeks of setup. We're live in 5 seconds.</p>
+      </div>
+
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="compare-table__them">Traditional PII Tools</th>
+              <th class="compare-table__us">RedactAI ✨</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Setup Time</td><td>30+ minutes (VMware/Docker)</td><td class="compare-win">5 seconds (paste & scan)</td></tr>
+            <tr><td>Free Tier</td><td>❌ "Schedule a demo"</td><td class="compare-win">✅ 1,000 docs/month free</td></tr>
+            <tr><td>API Access</td><td>Enterprise plan only</td><td class="compare-win">All plans, including free</td></tr>
+            <tr><td>Pricing</td><td>$10,000+/year</td><td class="compare-win">From $0/month</td></tr>
+            <tr><td>Target User</td><td>Enterprise IT teams</td><td class="compare-win">Anyone — devs, startups, enterprise</td></tr>
+            <tr><td>Data Storage</td><td>On your servers</td><td class="compare-win">Zero — nothing stored</td></tr>
+            <tr><td>Processing Speed</td><td>Varies</td><td class="compare-win">&lt;50ms per request</td></tr>
+            <tr><td>File Formats</td><td>400+</td><td>CSV, JSON, TXT (growing)</td></tr>
+            <tr><td>On-Premise</td><td>✅ Required</td><td>☁️ Cloud + self-host option</td></tr>
+            <tr><td>Compliance Reports</td><td>✅</td><td class="compare-win">✅ + Auto-generated</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section section--alt" id="testimonials">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Testimonials</div>
+        <h2 class="section__title">What Our Users Say</h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-card__text">"We integrated RedactAI's API into our support pipeline. Customer PII is now automatically stripped before tickets reach our analytics dashboard. Setup took 10 minutes."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">AK</div>
+            <div>
+              <div class="testimonial-card__name">Arjun Kumar</div>
+              <div class="testimonial-card__role">CTO, FinServ Startup</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-card__text">"Manual PII review of our database would have taken months. RedactAI scanned 50,000 records in under a minute and generated a compliance report automatically."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">SM</div>
+            <div>
+              <div class="testimonial-card__name">Sarah Mitchell</div>
+              <div class="testimonial-card__role">Data Protection Officer</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-card__text">"We use RedactAI to clean training data before feeding it to our ML models. It catches things regex never would — contextual names, ambiguous phone formats. Game changer."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">DP</div>
+            <div>
+              <div class="testimonial-card__name">Dev Patel</div>
+              <div class="testimonial-card__role">ML Engineer, AI Startup</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Pricing</div>
+        <h2 class="section__title">Simple, Transparent Pricing</h2>
+        <p class="section__desc">Start free. Scale as you grow. No sales calls required.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-card__name">Starter</div>
+          <div class="pricing-card__desc">For individuals and small projects</div>
+          <div class="pricing-card__price">$0 <span>/ mo</span></div>
+          <div class="pricing-card__period">Free forever</div>
+          <ul class="pricing-card__features">
+            <li>1,000 documents / month</li>
+            <li>All 12+ PII types</li>
+            <li>Web scanner + API</li>
+            <li>Copy redacted text</li>
+            <li>Community support</li>
+          </ul>
+          <a href="dashboard.html" class="btn btn--outline" style="width:100%;justify-content:center;">Get Started Free</a>
+        </div>
+        <div class="pricing-card pricing-card--popular">
+          <div class="pricing-card__name">Business</div>
+          <div class="pricing-card__desc">For teams and growing companies</div>
+          <div class="pricing-card__price">$49 <span>/ mo</span></div>
+          <div class="pricing-card__period">Billed monthly</div>
+          <ul class="pricing-card__features">
+            <li>50,000 documents / month</li>
+            <li>Batch file upload (CSV, JSON, TXT)</li>
+            <li>Full REST API with higher limits</li>
+            <li>Compliance reports (GDPR, HIPAA)</li>
+            <li>Scan history & export</li>
+            <li>Priority email support</li>
+          </ul>
+          <a href="dashboard.html" class="btn btn--primary" style="width:100%;justify-content:center;">Start 14-Day Trial →</a>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-card__name">Enterprise</div>
+          <div class="pricing-card__desc">For large organizations & MSPs</div>
+          <div class="pricing-card__price">$299 <span>/ mo</span></div>
+          <div class="pricing-card__period">Custom billing available</div>
+          <ul class="pricing-card__features">
+            <li>Unlimited documents</li>
+            <li>Dedicated API instance</li>
+            <li>Self-host / on-premise option</li>
+            <li>Custom PII detection rules</li>
+            <li>SOC2 compliance report</li>
+            <li>SLA & dedicated support</li>
+            <li>SSO & team management</li>
+            <li>White-label for MSPs</li>
+          </ul>
+          <button class="btn btn--outline" style="width:100%;justify-content:center;">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta-section">
+    <div class="container">
+      <div class="cta-card">
+        <h2 class="cta-card__title">Take Control of Your Sensitive Data Today</h2>
+        <p class="cta-card__desc">Join hundreds of companies using RedactAI to protect customer data, comply with regulations, and prevent breaches.</p>
+        <div class="cta-card__reasons">
+          <div class="cta-reason">✅ Instant PII detection — no setup needed</div>
+          <div class="cta-reason">✅ Comply with GDPR, HIPAA, PCI DSS, DPDP</div>
+          <div class="cta-reason">✅ Clean data before passing to AI or 3rd parties</div>
+        </div>
+        <div class="hero__actions" style="margin-top:32px;">
+          <a href="dashboard.html" class="btn btn--primary btn--large">Start Scanning Free →</a>
+          <a href="#demo" class="btn btn--outline btn--large">Try Live Demo</a>
+        </div>
+        <p style="margin-top:16px;font-size:13px;color:var(--text-muted);">No credit card · No install · Free forever up to 1,000 docs</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer-full">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <a href="#" class="navbar__logo" style="margin-bottom:16px;">
+            <div class="navbar__logo-icon">R</div>
+            <div class="navbar__logo-text">Redact<span>AI</span></div>
+          </a>
+          <p style="font-size:14px;color:var(--text-muted);line-height:1.7;">Detect and redact sensitive data instantly. Cloud-native, developer-friendly, and built for compliance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#demo">Live Demo</a>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="dashboard.html">Dashboard</a>
+        </div>
+        <div class="footer-col">
+          <h4>Use Cases</h4>
+          <a href="#use-cases">Compliance</a>
+          <a href="#use-cases">Breach Response</a>
+          <a href="#use-cases">AI Data Protection</a>
+          <a href="#use-cases">Data Migration</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#">Documentation</a>
+          <a href="#">API Reference</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 RedactAI. All rights reserved.</p>
+        <p>Built with 🛡️ for data privacy.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

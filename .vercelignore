@@ -1,0 +1,8 @@
+# Exclude backend files from Vercel (it's a static frontend only)
+server.py
+requirements.txt
+Dockerfile
+.dockerignore
+render.yaml
+__pycache__
+*.pyc
