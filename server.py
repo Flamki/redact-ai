@@ -131,6 +131,81 @@ if PIIRANHA_AVAILABLE:
         print(f"[!] Could not load Piiranha model: {e}")
         print("[*] Continuing with spaCy-only detection")
 
+# ---- GLiNER Zero-Shot NER (contextual understanding) ----
+GLINER_AVAILABLE = False
+try:
+    from gliner import GLiNER as GLiNERModel
+    GLINER_AVAILABLE = True
+except ImportError:
+    print("[!] gliner not installed, skipping zero-shot NER")
+
+class GLiNERRecognizer(EntityRecognizer):
+    """Zero-shot NER using GLiNER — understands context, no training needed.
+    Detects entities based on natural language labels like 'person name', 'date'."""
+
+    # Map GLiNER labels → Presidio entity types
+    LABEL_MAP = {
+        "person name": "PERSON",
+        "full name": "PERSON",
+        "date": "DATE_TIME",
+        "monetary amount": "MONETARY_VALUE",
+        "organization": "ORGANIZATION",
+        "address": "LOCATION",
+        "city": "LOCATION",
+        "country": "LOCATION",
+    }
+
+    # Entity labels we ask GLiNER to find — written in natural language
+    DETECT_LABELS = [
+        "person name",
+        "date",
+        "monetary amount",
+        "organization",
+        "address",
+    ]
+
+    def __init__(self):
+        supported = list(set(self.LABEL_MAP.values()))
+        super().__init__(
+            supported_entities=supported,
+            supported_language="en",
+            name="GLiNERRecognizer",
+        )
+        print("[*] Loading GLiNER zero-shot NER model...")
+        self.model = GLiNERModel.from_pretrained("urchade/gliner_medium-v2.1")
+        print("[+] GLiNER model loaded!")
+
+    def load(self):
+        pass
+
+    def analyze(self, text, entities=None, nlp_artifacts=None):
+        results = []
+        try:
+            preds = self.model.predict_entities(text, self.DETECT_LABELS, threshold=0.4)
+            for pred in preds:
+                label = pred["label"].lower()
+                presidio_type = self.LABEL_MAP.get(label, None)
+                if presidio_type and (entities is None or presidio_type in entities):
+                    results.append(
+                        RecognizerResult(
+                            entity_type=presidio_type,
+                            start=pred["start"],
+                            end=pred["end"],
+                            score=round(float(pred["score"]), 3),
+                        )
+                    )
+        except Exception as e:
+            print(f"[!] GLiNER error: {e}")
+        return results
+
+if GLINER_AVAILABLE:
+    try:
+        gliner_rec = GLiNERRecognizer()
+        registry.add_recognizer(gliner_rec)
+        print("[+] GLiNER zero-shot recognizer added!")
+    except Exception as e:
+        print(f"[!] Could not load GLiNER: {e}")
+
 analyzer = AnalyzerEngine(nlp_engine=nlp_engine, registry=registry, supported_languages=["en"])
 anonymizer = AnonymizerEngine()
 print("[+] Presidio engines ready!")
@@ -181,6 +256,8 @@ ENTITY_META = {
     "ACCOUNT_NUMBER": {"icon": "🏦", "color": "#ffd43b", "cssClass": "credit-card", "label": "Account Number"},
     "USERNAME": {"icon": "👤", "color": "#a29bfe", "cssClass": "name", "label": "Username"},
     "PASSWORD": {"icon": "🔒", "color": "#ff6b6b", "cssClass": "gov-id", "label": "Password"},
+    "MONETARY_VALUE": {"icon": "💰", "color": "#ffd43b", "cssClass": "credit-card", "label": "Money/Amount"},
+    "ORGANIZATION": {"icon": "🏢", "color": "#dfe6e9", "cssClass": "other", "label": "Organization"},
 }
 
 # ---- Request/Response Models ----

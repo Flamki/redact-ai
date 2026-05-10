@@ -6,7 +6,7 @@ let API_AVAILABLE = false;
 // Check if API is reachable
 async function checkAPI() {
   try {
-    const res = await fetch(window.location.origin + '/api/health', { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(window.location.origin + '/api/health', { signal: AbortSignal.timeout(15000) });
     if (res.ok) { API_AVAILABLE = true; return true; }
   } catch {}
   return false;
