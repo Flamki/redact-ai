@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: redactai-api
+    runtime: docker
+    repo: https://github.com/Flamki/redact-ai
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
