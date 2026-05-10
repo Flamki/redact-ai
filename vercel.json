@@ -1,0 +1,10 @@
+{
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://redactai-api.onrender.com/api/$1" },
+    { "source": "/docs", "destination": "https://redactai-api.onrender.com/docs" },
+    { "source": "/openapi.json", "destination": "https://redactai-api.onrender.com/openapi.json" }
+  ]
+}

@@ -22,9 +22,14 @@ from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
-# Initialize engines (loads spaCy model once at startup)
+# Initialize engines with small model (works on free tier hosting)
 print("[*] Loading NLP model & Presidio engines...")
-analyzer = AnalyzerEngine()
+nlp_config = {
+    "nlp_engine_name": "spacy",
+    "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
+}
+nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
+analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["en"])
 anonymizer = AnonymizerEngine()
 print("[+] Presidio engines ready!")
 
@@ -356,8 +361,9 @@ def serve_file(filename: str):
 
 if __name__ == "__main__":
     import uvicorn
-    print("\n[*] RedactAI API Server starting...")
-    print("[>] Dashboard: http://127.0.0.1:8000/dashboard")
-    print("[>] API Docs:  http://127.0.0.1:8000/docs")
-    print("[>] Landing:   http://127.0.0.1:8000/\n")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    print(f"\n[*] RedactAI API Server starting on port {port}...")
+    print(f"[>] Dashboard: http://127.0.0.1:{port}/dashboard")
+    print(f"[>] API Docs:  http://127.0.0.1:{port}/docs")
+    print(f"[>] Landing:   http://127.0.0.1:{port}/\n")
+    uvicorn.run(app, host="0.0.0.0", port=port)
