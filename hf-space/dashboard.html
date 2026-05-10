@@ -44,7 +44,7 @@
         <div class="sidebar__plan-label">Free Plan</div>
         <div class="sidebar__plan-usage">
           <div class="sidebar__plan-bar"><div class="sidebar__plan-fill" style="width:34%"></div></div>
-          <span>340 / 1,000 docs</span>
+          <span id="usage-count">0 / 1,000 docs</span>
         </div>
         <button class="btn btn--primary btn--small" style="width:100%;justify-content:center;margin-top:10px;">Upgrade Plan</button>
       </div>
@@ -78,34 +78,34 @@
         <div class="metric-card">
           <div class="metric-card__icon" style="background:var(--accent-glow);color:var(--accent-light);">🔍</div>
           <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-scans">340</div>
+            <div class="metric-card__value" id="metric-scans">0</div>
             <div class="metric-card__label">Total Scans</div>
           </div>
-          <div class="metric-card__trend up">↑ 12%</div>
+          <div class="metric-card__trend" id="trend-scans">—</div>
         </div>
         <div class="metric-card">
           <div class="metric-card__icon" style="background:var(--danger-bg);color:var(--danger);">🚨</div>
           <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-pii">2,847</div>
+            <div class="metric-card__value" id="metric-pii">0</div>
             <div class="metric-card__label">PII Detected</div>
           </div>
-          <div class="metric-card__trend up">↑ 8%</div>
+          <div class="metric-card__trend" id="trend-pii">—</div>
         </div>
         <div class="metric-card">
           <div class="metric-card__icon" style="background:var(--success-bg);color:var(--success);">✅</div>
           <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-redacted">2,691</div>
+            <div class="metric-card__value" id="metric-redacted">0</div>
             <div class="metric-card__label">Auto-Redacted</div>
           </div>
-          <div class="metric-card__trend up">↑ 15%</div>
+          <div class="metric-card__trend" id="trend-redacted">—</div>
         </div>
         <div class="metric-card">
           <div class="metric-card__icon" style="background:var(--warning-bg);color:var(--warning);">⏱️</div>
           <div class="metric-card__data">
-            <div class="metric-card__value">23ms</div>
+            <div class="metric-card__value" id="metric-ms">0ms</div>
             <div class="metric-card__label">Avg Response</div>
           </div>
-          <div class="metric-card__trend neutral">→ 0%</div>
+          <div class="metric-card__trend" id="trend-ms">—</div>
         </div>
       </div>
 

@@ -69,20 +69,27 @@ async function fetchHistory() {
 
 // ---- Overview Cards (live data) ----
 function updateOverviewCards() {
-  const cards = document.querySelectorAll('.metric-card');
-  if (cards.length >= 4) {
-    cards[0].querySelector('.metric-card__value').textContent = LIVE_STATS.total_scans;
-    cards[1].querySelector('.metric-card__value').textContent = LIVE_STATS.total_entities;
-    cards[2].querySelector('.metric-card__value').textContent = LIVE_STATS.total_entities; // auto-redacted
-    cards[3].querySelector('.metric-card__value').textContent = LIVE_STATS.avg_response_ms + 'ms';
+  const el = (id) => document.getElementById(id);
+  if (!el('metric-scans')) return;
 
-    // Update trend badges
-    cards.forEach(card => {
-      const badge = card.querySelector('.metric-card__badge');
-      if (badge && LIVE_STATS.total_scans > 0) {
-        badge.textContent = 'Live';
-        badge.className = 'metric-card__badge metric-card__badge--up';
-      }
+  el('metric-scans').textContent = LIVE_STATS.total_scans.toLocaleString();
+  el('metric-pii').textContent = LIVE_STATS.total_entities.toLocaleString();
+  el('metric-redacted').textContent = LIVE_STATS.total_entities.toLocaleString();
+  el('metric-ms').textContent = LIVE_STATS.avg_response_ms + 'ms';
+
+  // Update usage counter in sidebar
+  const usage = el('usage-count');
+  if (usage) usage.textContent = `${LIVE_STATS.total_scans} / 1,000 docs`;
+
+  // Update sidebar progress bar
+  const fill = document.querySelector('.sidebar__plan-fill');
+  if (fill) fill.style.width = Math.min(100, (LIVE_STATS.total_scans / 1000) * 100) + '%';
+
+  // Update trend badges
+  if (LIVE_STATS.total_scans > 0) {
+    ['trend-scans', 'trend-pii', 'trend-redacted', 'trend-ms'].forEach(id => {
+      const badge = el(id);
+      if (badge) { badge.textContent = '● Live'; badge.className = 'metric-card__trend up'; }
     });
   }
 }
