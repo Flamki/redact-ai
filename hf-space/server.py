@@ -23,8 +23,14 @@ from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
 # ---- Piiranha Transformer Recognizer ----
-from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
 from presidio_analyzer import EntityRecognizer, RecognizerResult
+
+PIIRANHA_AVAILABLE = False
+try:
+    from transformers import pipeline as hf_pipeline
+    PIIRANHA_AVAILABLE = True
+except ImportError:
+    print("[!] transformers not installed, skipping Piiranha model")
 
 class PiiranhaRecognizer(EntityRecognizer):
     """Custom Presidio recognizer using the Piiranha PII model (DeBERTa-v3, 99.4% accuracy)"""
@@ -63,7 +69,7 @@ class PiiranhaRecognizer(EntityRecognizer):
             name="PiiranhaRecognizer",
         )
         print("[*] Loading Piiranha PII transformer model...")
-        self.pipe = pipeline(
+        self.pipe = hf_pipeline(
             "token-classification",
             model="iiiorg/piiranha-v1-detect-personal-information",
             aggregation_strategy="max",
@@ -87,7 +93,7 @@ class PiiranhaRecognizer(EntityRecognizer):
                             entity_type=presidio_type,
                             start=pred["start"],
                             end=pred["end"],
-                            score=round(pred["score"], 3),
+                            score=round(float(pred["score"]), 3),
                         )
                     )
         except Exception as e:
@@ -95,24 +101,39 @@ class PiiranhaRecognizer(EntityRecognizer):
         return results
 
 
-# Initialize engines with large model + Piiranha transformer
+# Initialize engines — try large model, fall back to small
 print("[*] Loading NLP model & Presidio engines...")
-nlp_config = {
-    "nlp_engine_name": "spacy",
-    "models": [{"lang_code": "en", "model_name": "en_core_web_lg"}],
-}
-nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
+
+# Try en_core_web_lg first (better NER), fall back to en_core_web_sm
+for model_name in ["en_core_web_lg", "en_core_web_sm"]:
+    try:
+        nlp_config = {
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": "en", "model_name": model_name}],
+        }
+        nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
+        print(f"[+] Using spaCy model: {model_name}")
+        break
+    except Exception as e:
+        print(f"[!] {model_name} not available: {e}")
+        continue
 
 registry = RecognizerRegistry()
 registry.load_predefined_recognizers(nlp_engine=nlp_engine)
 
-# Add the Piiranha transformer recognizer
-piiranha = PiiranhaRecognizer()
-registry.add_recognizer(piiranha)
+# Add Piiranha transformer if available
+if PIIRANHA_AVAILABLE:
+    try:
+        piiranha = PiiranhaRecognizer()
+        registry.add_recognizer(piiranha)
+        print("[+] Piiranha transformer recognizer added!")
+    except Exception as e:
+        print(f"[!] Could not load Piiranha model: {e}")
+        print("[*] Continuing with spaCy-only detection")
 
 analyzer = AnalyzerEngine(nlp_engine=nlp_engine, registry=registry, supported_languages=["en"])
 anonymizer = AnonymizerEngine()
-print("[+] Presidio + Piiranha engines ready!")
+print("[+] Presidio engines ready!")
 
 # ---- FastAPI App ----
 app = FastAPI(
@@ -213,7 +234,7 @@ def scan_text(req: ScanRequest):
             "text": req.text[r.start:r.end],
             "start": r.start,
             "end": r.end,
-            "score": round(r.score, 3),
+            "score": round(float(r.score), 3),
             "icon": meta["icon"],
             "color": meta["color"],
             "cssClass": meta["cssClass"],
@@ -287,7 +308,7 @@ def scan_batch(req: BatchScanRequest):
                 "type": r.entity_type,
                 "label": meta["label"],
                 "text": text[r.start:r.end],
-                "score": round(r.score, 3),
+                "score": round(float(r.score), 3),
             })
         
         results.append({
@@ -346,7 +367,7 @@ async def scan_file(file: UploadFile = File(...)):
             "type": r.entity_type,
             "label": meta["label"],
             "text": all_text[r.start:r.end],
-            "score": round(r.score, 3),
+            "score": round(float(r.score), 3),
         })
     
     elapsed_ms = round((time.time() - start) * 1000, 2)

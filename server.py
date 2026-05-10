@@ -22,14 +22,116 @@ from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
-# Initialize engines with small model (works on free tier hosting)
+# ---- Piiranha Transformer Recognizer ----
+from presidio_analyzer import EntityRecognizer, RecognizerResult
+
+PIIRANHA_AVAILABLE = False
+try:
+    from transformers import pipeline as hf_pipeline
+    PIIRANHA_AVAILABLE = True
+except ImportError:
+    print("[!] transformers not installed, skipping Piiranha model")
+
+class PiiranhaRecognizer(EntityRecognizer):
+    """Custom Presidio recognizer using the Piiranha PII model (DeBERTa-v3, 99.4% accuracy)"""
+
+    PIIRANHA_TO_PRESIDIO = {
+        "GIVENNAME": "PERSON",
+        "SURNAME": "PERSON",
+        "FIRSTNAME": "PERSON",
+        "LASTNAME": "PERSON",
+        "EMAIL": "EMAIL_ADDRESS",
+        "PHONE": "PHONE_NUMBER",
+        "PHONENUMBER": "PHONE_NUMBER",
+        "CREDITCARD": "CREDIT_CARD",
+        "CREDITCARDNUMBER": "CREDIT_CARD",
+        "SOCIALNUM": "US_SSN",
+        "SOCIALSECURITYNUMBER": "US_SSN",
+        "DRIVERSLICENSE": "US_DRIVER_LICENSE",
+        "DATEOFBIRTH": "DATE_TIME",
+        "DOB": "DATE_TIME",
+        "IDCARD": "ID_CARD",
+        "TAXNUMBER": "TAX_ID",
+        "STREETADDRESS": "LOCATION",
+        "CITY": "LOCATION",
+        "ZIPCODE": "LOCATION",
+        "BUILDINGNUMBER": "LOCATION",
+        "ACCOUNTNUMBER": "ACCOUNT_NUMBER",
+        "USERNAME": "USERNAME",
+        "PASSWORD": "PASSWORD",
+    }
+
+    def __init__(self):
+        supported = list(set(self.PIIRANHA_TO_PRESIDIO.values()))
+        super().__init__(
+            supported_entities=supported,
+            supported_language="en",
+            name="PiiranhaRecognizer",
+        )
+        print("[*] Loading Piiranha PII transformer model...")
+        self.pipe = hf_pipeline(
+            "token-classification",
+            model="iiiorg/piiranha-v1-detect-personal-information",
+            aggregation_strategy="max",
+            device=-1,  # CPU
+        )
+        print("[+] Piiranha model loaded!")
+
+    def load(self):
+        pass
+
+    def analyze(self, text, entities=None, nlp_artifacts=None):
+        results = []
+        try:
+            preds = self.pipe(text)
+            for pred in preds:
+                label = pred["entity_group"].upper().replace("-", "")
+                presidio_type = self.PIIRANHA_TO_PRESIDIO.get(label, None)
+                if presidio_type and (entities is None or presidio_type in entities):
+                    results.append(
+                        RecognizerResult(
+                            entity_type=presidio_type,
+                            start=pred["start"],
+                            end=pred["end"],
+                            score=round(float(pred["score"]), 3),
+                        )
+                    )
+        except Exception as e:
+            print(f"[!] Piiranha error: {e}")
+        return results
+
+
+# Initialize engines — try large model, fall back to small
 print("[*] Loading NLP model & Presidio engines...")
-nlp_config = {
-    "nlp_engine_name": "spacy",
-    "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
-}
-nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
-analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["en"])
+
+# Try en_core_web_lg first (better NER), fall back to en_core_web_sm
+for model_name in ["en_core_web_lg", "en_core_web_sm"]:
+    try:
+        nlp_config = {
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": "en", "model_name": model_name}],
+        }
+        nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
+        print(f"[+] Using spaCy model: {model_name}")
+        break
+    except Exception as e:
+        print(f"[!] {model_name} not available: {e}")
+        continue
+
+registry = RecognizerRegistry()
+registry.load_predefined_recognizers(nlp_engine=nlp_engine)
+
+# Add Piiranha transformer if available
+if PIIRANHA_AVAILABLE:
+    try:
+        piiranha = PiiranhaRecognizer()
+        registry.add_recognizer(piiranha)
+        print("[+] Piiranha transformer recognizer added!")
+    except Exception as e:
+        print(f"[!] Could not load Piiranha model: {e}")
+        print("[*] Continuing with spaCy-only detection")
+
+analyzer = AnalyzerEngine(nlp_engine=nlp_engine, registry=registry, supported_languages=["en"])
 anonymizer = AnonymizerEngine()
 print("[+] Presidio engines ready!")
 
@@ -74,6 +176,11 @@ ENTITY_META = {
     "UK_NHS": {"icon": "🏥", "color": "#e17055", "cssClass": "gov-id", "label": "UK NHS Number"},
     "IN_AADHAAR": {"icon": "🆔", "color": "#ff6b6b", "cssClass": "gov-id", "label": "Aadhaar"},
     "IN_PAN": {"icon": "🆔", "color": "#ff6b6b", "cssClass": "gov-id", "label": "PAN Card"},
+    "ID_CARD": {"icon": "🆔", "color": "#ff6b6b", "cssClass": "gov-id", "label": "ID Card"},
+    "TAX_ID": {"icon": "🆔", "color": "#ff6b6b", "cssClass": "gov-id", "label": "Tax Number"},
+    "ACCOUNT_NUMBER": {"icon": "🏦", "color": "#ffd43b", "cssClass": "credit-card", "label": "Account Number"},
+    "USERNAME": {"icon": "👤", "color": "#a29bfe", "cssClass": "name", "label": "Username"},
+    "PASSWORD": {"icon": "🔒", "color": "#ff6b6b", "cssClass": "gov-id", "label": "Password"},
 }
 
 # ---- Request/Response Models ----
@@ -127,7 +234,7 @@ def scan_text(req: ScanRequest):
             "text": req.text[r.start:r.end],
             "start": r.start,
             "end": r.end,
-            "score": round(r.score, 3),
+            "score": round(float(r.score), 3),
             "icon": meta["icon"],
             "color": meta["color"],
             "cssClass": meta["cssClass"],
@@ -201,7 +308,7 @@ def scan_batch(req: BatchScanRequest):
                 "type": r.entity_type,
                 "label": meta["label"],
                 "text": text[r.start:r.end],
-                "score": round(r.score, 3),
+                "score": round(float(r.score), 3),
             })
         
         results.append({
@@ -260,7 +367,7 @@ async def scan_file(file: UploadFile = File(...)):
             "type": r.entity_type,
             "label": meta["label"],
             "text": all_text[r.start:r.end],
-            "score": round(r.score, 3),
+            "score": round(float(r.score), 3),
         })
     
     elapsed_ms = round((time.time() - start) * 1000, 2)
