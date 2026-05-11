@@ -237,13 +237,27 @@
       <div class="chart-card">
         <div class="chart-card__header">
           <h3>📋 Scan History</h3>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="date" class="form-input" id="history-date-from" style="width:140px;padding:6px 8px;font-size:13px;" title="From date">
+            <span style="color:var(--text-secondary);font-size:13px;">—</span>
+            <input type="date" class="form-input" id="history-date-to" style="width:140px;padding:6px 8px;font-size:13px;" title="To date">
             <select class="chart-select" id="history-filter">
-              <option value="all">All Types</option>
+              <option value="all">All Sources</option>
               <option value="text">Text Scans</option>
               <option value="file">File Scans</option>
-              <option value="api">API Scans</option>
             </select>
+            <select class="chart-select" id="history-type-filter">
+              <option value="all">All PII Types</option>
+              <option value="Person Name">Person Name</option>
+              <option value="Email">Email</option>
+              <option value="Phone">Phone</option>
+              <option value="SSN">SSN</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Date/Time">Date/Time</option>
+              <option value="Location">Location</option>
+              <option value="IP Address">IP Address</option>
+            </select>
+            <button class="btn btn--outline btn--small" id="history-apply-filter">🔍 Filter</button>
             <button class="btn btn--outline btn--small" id="export-history-btn">⬇ Export CSV</button>
           </div>
         </div>
@@ -383,6 +397,39 @@ print(response.json())</code></pre>
           <button class="btn btn--primary" style="margin-top:12px;">Save Settings</button>
         </div>
       </div>
+
+      <!-- Custom Detectors -->
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>🔧 Custom Detectors</h3>
+          <button class="btn btn--primary btn--small" id="add-detector-btn">+ Add Detector</button>
+        </div>
+        <p style="color:var(--text-secondary);margin-bottom:16px;font-size:14px;">Define custom regex patterns to detect company-specific PII (employee IDs, project codes, internal identifiers).</p>
+        <div id="custom-detectors-list"></div>
+        <div id="detector-form" style="display:none;margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);">
+          <div class="form-group">
+            <label class="form-label">Detector Name</label>
+            <input type="text" class="form-input" id="detector-name" placeholder="e.g. Employee ID">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Entity Type (uppercase, no spaces)</label>
+            <input type="text" class="form-input" id="detector-entity" placeholder="e.g. EMPLOYEE_ID">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Regex Pattern</label>
+            <input type="text" class="form-input" id="detector-regex" placeholder="e.g. EMP-\d{6}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confidence Score (0.0 - 1.0)</label>
+            <input type="number" class="form-input" id="detector-score" value="0.8" min="0" max="1" step="0.1">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn--primary" id="save-detector-btn">Save Detector</button>
+            <button class="btn btn--ghost" id="cancel-detector-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <div class="chart-card">
         <div class="chart-card__header"><h3>⚠️ Danger Zone</h3></div>
         <div style="display:flex;justify-content:space-between;align-items:center;">

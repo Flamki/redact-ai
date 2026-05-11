@@ -699,6 +699,75 @@ def get_supported_entities():
     return {"entities": entities, "count": len(entities)}
 
 
+class CustomDetectorRequest(BaseModel):
+    name: str
+    entity_type: str
+    regex: str
+    score: float = 0.8
+
+
+@app.post("/api/v1/custom-detector")
+def add_custom_detector(req: CustomDetectorRequest):
+    """Register a custom regex-based PII detector at runtime"""
+    import re
+    
+    # Validate regex
+    try:
+        re.compile(req.regex)
+    except re.error as e:
+        raise HTTPException(400, f"Invalid regex: {e}")
+    
+    # Use Presidio's PatternRecognizer API
+    from presidio_analyzer import Pattern, PatternRecognizer
+    
+    pattern = Pattern(
+        name=req.name,
+        regex=req.regex,
+        score=req.score,
+    )
+    
+    recognizer = PatternRecognizer(
+        supported_entity=req.entity_type,
+        name=f"custom_{req.name.lower().replace(' ', '_')}",
+        patterns=[pattern],
+    )
+    
+    # Add to the live registry
+    analyzer.registry.add_recognizer(recognizer)
+    
+    # Also add to entity meta for frontend display
+    ENTITY_META[req.entity_type] = {
+        "icon": "🔧",
+        "color": "#b8e994",
+        "cssClass": "other",
+        "label": req.name,
+    }
+    
+    return {
+        "status": "ok",
+        "message": f"Custom detector '{req.name}' registered for entity '{req.entity_type}'",
+        "entity_type": req.entity_type,
+        "pattern": req.regex,
+    }
+
+
+@app.get("/api/v1/custom-detectors")
+def list_custom_detectors():
+    """List all custom detectors currently registered"""
+    custom = []
+    for rec in analyzer.registry.recognizers:
+        if hasattr(rec, 'name') and rec.name and rec.name.startswith('custom_'):
+            patterns = []
+            if hasattr(rec, 'patterns'):
+                patterns = [{"name": p.name, "regex": p.regex, "score": p.score} for p in rec.patterns]
+            custom.append({
+                "name": rec.name,
+                "entity_type": rec.supported_entities[0] if rec.supported_entities else "UNKNOWN",
+                "patterns": patterns,
+            })
+    return {"detectors": custom, "count": len(custom)}
+
+
 @app.get("/api/v1/export")
 def export_history(format: str = "csv"):
     """Export scan history as CSV or JSON — for compliance/audit"""

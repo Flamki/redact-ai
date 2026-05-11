@@ -210,16 +210,57 @@ function renderRecentTable() {
 let historyPage = 1;
 const HISTORY_PER_PAGE = 10;
 
+function getFilteredHistory() {
+  let filtered = SCAN_HISTORY;
+  
+  // Source filter
+  var sourceFilter = document.getElementById('history-filter');
+  if (sourceFilter && sourceFilter.value !== 'all') {
+    if (sourceFilter.value === 'text') {
+      filtered = filtered.filter(function(s) { return s.source === 'Text Input'; });
+    } else if (sourceFilter.value === 'file') {
+      filtered = filtered.filter(function(s) { return s.source && s.source.startsWith('File:'); });
+    }
+  }
+  
+  // PII Type filter
+  var typeFilter = document.getElementById('history-type-filter');
+  if (typeFilter && typeFilter.value !== 'all') {
+    var selectedType = typeFilter.value;
+    filtered = filtered.filter(function(s) {
+      return s.types && s.types.indexOf(selectedType) !== -1;
+    });
+  }
+  
+  // Date range filter
+  var dateFrom = document.getElementById('history-date-from');
+  var dateTo = document.getElementById('history-date-to');
+  if (dateFrom && dateFrom.value) {
+    var from = new Date(dateFrom.value);
+    filtered = filtered.filter(function(s) { return new Date(s.timestamp) >= from; });
+  }
+  if (dateTo && dateTo.value) {
+    var to = new Date(dateTo.value);
+    to.setDate(to.getDate() + 1); // Include end date
+    filtered = filtered.filter(function(s) { return new Date(s.timestamp) <= to; });
+  }
+  
+  return filtered;
+}
+
 function renderHistoryTable() {
   const tbody = document.getElementById('history-tbody');
   const info = document.getElementById('pagination-info');
   if (!tbody) return;
-  const totalPages = Math.max(1, Math.ceil(SCAN_HISTORY.length / HISTORY_PER_PAGE));
+  
+  var filtered = getFilteredHistory();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / HISTORY_PER_PAGE));
+  if (historyPage > totalPages) historyPage = 1;
   const start = (historyPage - 1) * HISTORY_PER_PAGE;
-  const slice = SCAN_HISTORY.slice(start, start + HISTORY_PER_PAGE);
+  const slice = filtered.slice(start, start + HISTORY_PER_PAGE);
 
   if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No scan history yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No scans match your filters</td></tr>';
     if (info) info.textContent = 'Page 1 of 1';
     return;
   }
@@ -238,15 +279,22 @@ function renderHistoryTable() {
     </tr>`;
   }).join('');
 
-  if (info) info.textContent = `Page ${historyPage} of ${totalPages}`;
+  if (info) info.textContent = `Page ${historyPage} of ${totalPages} (${filtered.length} results)`;
 }
 
 document.getElementById('prev-page')?.addEventListener('click', () => {
   if (historyPage > 1) { historyPage--; renderHistoryTable(); }
 });
 document.getElementById('next-page')?.addEventListener('click', () => {
-  const totalPages = Math.ceil(SCAN_HISTORY.length / HISTORY_PER_PAGE);
+  var filtered = getFilteredHistory();
+  const totalPages = Math.ceil(filtered.length / HISTORY_PER_PAGE);
   if (historyPage < totalPages) { historyPage++; renderHistoryTable(); }
+});
+
+// Filter button
+document.getElementById('history-apply-filter')?.addEventListener('click', () => {
+  historyPage = 1;
+  renderHistoryTable();
 });
 
 // ---- Scanner Page — Uses Live Presidio API ----
@@ -567,17 +615,8 @@ function initAPIKeys() {
   });
 }
 
-// ---- Export History as CSV ----
-document.getElementById('export-history-btn')?.addEventListener('click', () => {
-  const csv = 'Date,Source,Preview,Entities,Status\n' + SCAN_HISTORY.map(s =>
-    `"${s.timestamp}","${s.source}","${s.preview || ''}",${s.entity_count},"Completed"`
-  ).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'redactai_history.csv';
-  a.click();
-});
+// ---- Export History — Uses backend API ----
+// (wired up in DOMContentLoaded below)
 
 // ---- Init Everything ----
 document.addEventListener('DOMContentLoaded', function() {
@@ -608,8 +647,9 @@ document.addEventListener('DOMContentLoaded', function() {
   initScannerPage();
   initFileUpload();
   initAPIKeys();
+  initCustomDetectors();
 
-  // Export CSV button
+  // Export CSV button — uses backend API for full Supabase export
   var exportBtn = document.getElementById('export-history-btn');
   if (exportBtn) {
     exportBtn.addEventListener('click', function() {
@@ -626,3 +666,106 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// ---- Custom Detectors ----
+function initCustomDetectors() {
+  var detectors = JSON.parse(localStorage.getItem('redactai_custom_detectors') || '[]');
+  var list = document.getElementById('custom-detectors-list');
+  var form = document.getElementById('detector-form');
+  var addBtn = document.getElementById('add-detector-btn');
+  var saveBtn = document.getElementById('save-detector-btn');
+  var cancelBtn = document.getElementById('cancel-detector-btn');
+  if (!list) return;
+
+  function render() {
+    if (detectors.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted);padding:12px;text-align:center;">No custom detectors yet. Click "+ Add Detector" to create one.</div>';
+      return;
+    }
+    list.innerHTML = detectors.map(function(d, i) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;">' +
+        '<div>' +
+          '<div style="font-weight:600;">' + d.name + ' <span class="badge">' + d.entity + '</span></div>' +
+          '<div style="color:var(--text-secondary);font-size:13px;font-family:monospace;">/' + d.regex + '/ (score: ' + d.score + ')</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="btn btn--outline btn--small" onclick="testDetector(' + i + ')">\uD83E\uDDEA Test</button>' +
+          '<button class="btn btn--danger btn--small" onclick="removeDetector(' + i + ')">\u2716</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  render();
+
+  if (addBtn) addBtn.addEventListener('click', function() {
+    form.style.display = 'block';
+  });
+
+  if (cancelBtn) cancelBtn.addEventListener('click', function() {
+    form.style.display = 'none';
+  });
+
+  if (saveBtn) saveBtn.addEventListener('click', function() {
+    var name = document.getElementById('detector-name').value.trim();
+    var entity = document.getElementById('detector-entity').value.trim().toUpperCase().replace(/\s+/g, '_');
+    var regex = document.getElementById('detector-regex').value.trim();
+    var score = parseFloat(document.getElementById('detector-score').value) || 0.8;
+
+    if (!name || !entity || !regex) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    // Validate regex
+    try {
+      new RegExp(regex);
+    } catch (e) {
+      alert('Invalid regex pattern: ' + e.message);
+      return;
+    }
+
+    detectors.push({ name: name, entity: entity, regex: regex, score: score });
+    localStorage.setItem('redactai_custom_detectors', JSON.stringify(detectors));
+
+    // Also register on backend if API available
+    if (API_AVAILABLE) {
+      fetch(API_BASE + '/custom-detector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, entity_type: entity, regex: regex, score: score })
+      }).catch(function() {});
+    }
+
+    // Reset form
+    document.getElementById('detector-name').value = '';
+    document.getElementById('detector-entity').value = '';
+    document.getElementById('detector-regex').value = '';
+    document.getElementById('detector-score').value = '0.8';
+    form.style.display = 'none';
+    render();
+  });
+
+  window.removeDetector = function(index) {
+    detectors.splice(index, 1);
+    localStorage.setItem('redactai_custom_detectors', JSON.stringify(detectors));
+    render();
+  };
+
+  window.testDetector = function(index) {
+    var d = detectors[index];
+    var testText = prompt('Enter text to test detector "' + d.name + '":', '');
+    if (!testText) return;
+    try {
+      var re = new RegExp(d.regex, 'g');
+      var matches = testText.match(re);
+      if (matches) {
+        alert('\u2705 Found ' + matches.length + ' match(es):\n' + matches.join('\n'));
+      } else {
+        alert('\u274c No matches found for pattern /' + d.regex + '/');
+      }
+    } catch (e) {
+      alert('Regex error: ' + e.message);
+    }
+  };
+}
