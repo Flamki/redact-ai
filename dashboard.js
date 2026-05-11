@@ -15,25 +15,18 @@ async function checkAPI() {
   return false;
 }
 
-// ---- Page Navigation ----
+// ---- Page Navigation (initialized in DOMContentLoaded below) ----
 function switchPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.sidebar__link').forEach(l => l.classList.remove('active'));
-  const page = document.getElementById('page-' + pageId);
-  const nav = document.getElementById('nav-' + pageId);
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.sidebar__link').forEach(function(l) { l.classList.remove('active'); });
+  var page = document.getElementById('page-' + pageId);
+  var nav = document.getElementById('nav-' + pageId);
   if (page) page.classList.add('active');
   if (nav) nav.classList.add('active');
-  document.getElementById('page-title').textContent = nav ? nav.textContent.trim() : pageId;
+  var title = document.getElementById('page-title');
+  if (title) title.textContent = nav ? nav.textContent.trim() : pageId;
 }
-
-document.querySelectorAll('.sidebar__link').forEach(btn => {
-  btn.addEventListener('click', () => switchPage(btn.dataset.page));
-});
-
-// Mobile menu toggle
-document.getElementById('menu-toggle')?.addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('open');
-});
+// Sidebar listeners are attached inside DOMContentLoaded
 
 // ---- Live Data Store (populated from API) ----
 let SCAN_HISTORY = [];
@@ -561,8 +554,27 @@ document.getElementById('export-history-btn')?.addEventListener('click', () => {
 });
 
 // ---- Init Everything ----
-document.addEventListener('DOMContentLoaded', async () => {
-  await checkAPI();
+document.addEventListener('DOMContentLoaded', function() {
+  // ---- Sidebar Navigation (event delegation) ----
+  var sidebarNav = document.querySelector('.sidebar__nav');
+  if (sidebarNav) {
+    sidebarNav.addEventListener('click', function(e) {
+      var btn = e.target.closest('.sidebar__link');
+      if (btn && btn.dataset.page) {
+        switchPage(btn.dataset.page);
+      }
+    });
+  }
+
+  // Mobile menu toggle
+  var menuToggle = document.getElementById('menu-toggle');
+  if (menuToggle) {
+    menuToggle.addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+  }
+
+  // Render charts and tables
   renderBarChart();
   renderDonutChart();
   renderRecentTable();
@@ -571,9 +583,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFileUpload();
   initAPIKeys();
 
-  // Fetch live data if API is available
-  if (API_AVAILABLE) {
-    fetchStats();
-    fetchHistory();
-  }
+  // Check API and fetch live data (non-blocking)
+  checkAPI().then(function() {
+    if (API_AVAILABLE) {
+      fetchStats();
+      fetchHistory();
+    }
+  });
 });
