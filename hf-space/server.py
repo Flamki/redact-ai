@@ -8,13 +8,28 @@ import json
 import time
 import uuid
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import FastAPI, File, UploadFile, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+
+# ---- Supabase Setup ----
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://amklcfiyxeomdueeptyu.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFta2xjZml5eGVvbWR1ZWVwdHl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDQ2OTIsImV4cCI6MjA5NDA4MDY5Mn0.WNvPc9hrorOw_pMI2PS8pVPklfqwXCQH3kBJSwja6dk")
+SUPABASE_AVAILABLE = False
+try:
+    from supabase import create_client
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Quick connectivity check
+    supabase.table("redact_scans").select("id").limit(1).execute()
+    SUPABASE_AVAILABLE = True
+    print("[+] Supabase connected! Persistent history enabled.")
+except Exception as e:
+    print(f"[!] Supabase unavailable ({e}), falling back to in-memory history")
+    supabase = None
 
 # ---- Presidio Setup ----
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
@@ -253,11 +268,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---- In-Memory Storage (use DB in production) ----
-scan_history = []
+# ---- Storage (Supabase persistent + in-memory fallback) ----
+scan_history_mem = []  # fallback only
 api_keys = {
     "rda_live_sk_demo123": {"name": "Demo Key", "created": datetime.now().isoformat(), "active": True}
 }
+
+def save_scan(record):
+    """Save a scan record to Supabase (or in-memory fallback)"""
+    if SUPABASE_AVAILABLE:
+        try:
+            supabase.table("redact_scans").insert({
+                "source": record["source"],
+                "entity_count": record["entity_count"],
+                "types": json.dumps(record["types"]),
+                "processing_ms": int(record["processing_ms"]),
+                "preview": record.get("preview", ""),
+            }).execute()
+            return
+        except Exception as e:
+            print(f"[!] Supabase insert failed: {e}")
+    scan_history_mem.append(record)
 
 # ---- Entity color/icon mapping for frontend ----
 ENTITY_META = {
@@ -375,10 +406,10 @@ def scan_text(req: ScanRequest):
     
     elapsed_ms = round((time.time() - start) * 1000, 2)
     
-    # Store in history
-    scan_history.append({
+    # Store in history (persistent via Supabase)
+    save_scan({
         "id": str(uuid.uuid4())[:8],
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "source": "Text Input",
         "entity_count": len(entities),
         "types": list(summary.keys()),
@@ -477,10 +508,10 @@ async def scan_file(file: UploadFile = File(...)):
     
     elapsed_ms = round((time.time() - start) * 1000, 2)
     
-    # Store in history
-    scan_history.append({
+    # Store in history (persistent via Supabase)
+    save_scan({
         "id": str(uuid.uuid4())[:8],
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "source": f"File: {file.filename}",
         "entity_count": len(entities),
         "types": list(set(e["label"] for e in entities)),
@@ -500,10 +531,46 @@ async def scan_file(file: UploadFile = File(...)):
 
 @app.get("/api/v1/history")
 def get_history(page: int = 1, per_page: int = 10):
-    """Get scan history with pagination"""
-    total = len(scan_history)
+    """Get scan history with pagination — reads from Supabase"""
+    if SUPABASE_AVAILABLE:
+        try:
+            count_resp = supabase.table("redact_scans").select("id", count="exact").execute()
+            total = count_resp.count or 0
+            offset = (page - 1) * per_page
+            data_resp = supabase.table("redact_scans") \
+                .select("*") \
+                .order("created_at", desc=True) \
+                .range(offset, offset + per_page - 1) \
+                .execute()
+            items = []
+            for row in data_resp.data:
+                types_val = row.get("types", "[]")
+                if isinstance(types_val, str):
+                    try:
+                        types_val = json.loads(types_val)
+                    except Exception:
+                        types_val = []
+                items.append({
+                    "id": str(row["id"])[:8],
+                    "timestamp": row["created_at"],
+                    "source": row.get("source", "Unknown"),
+                    "entity_count": row.get("entity_count", 0),
+                    "types": types_val,
+                    "processing_ms": row.get("processing_ms", 0),
+                    "preview": row.get("preview", ""),
+                })
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "pages": max(1, (total + per_page - 1) // per_page),
+            }
+        except Exception as e:
+            print(f"[!] Supabase history read failed: {e}")
+    # Fallback to in-memory
+    total = len(scan_history_mem)
     start = (page - 1) * per_page
-    items = list(reversed(scan_history))[start:start + per_page]
+    items = list(reversed(scan_history_mem))[start:start + per_page]
     return {
         "items": items,
         "total": total,
@@ -514,17 +581,41 @@ def get_history(page: int = 1, per_page: int = 10):
 
 @app.get("/api/v1/stats")
 def get_stats():
-    """Get overview statistics"""
-    total_scans = len(scan_history)
-    total_entities = sum(h["entity_count"] for h in scan_history)
-    avg_ms = round(sum(h["processing_ms"] for h in scan_history) / max(1, total_scans), 2)
-    
-    # Type breakdown
+    """Get overview statistics — reads from Supabase"""
+    if SUPABASE_AVAILABLE:
+        try:
+            count_resp = supabase.table("redact_scans").select("id", count="exact").execute()
+            total_scans = count_resp.count or 0
+            all_resp = supabase.table("redact_scans").select("entity_count,processing_ms,types").execute()
+            rows = all_resp.data or []
+            total_entities = sum(r.get("entity_count", 0) for r in rows)
+            avg_ms = round(sum(r.get("processing_ms", 0) for r in rows) / max(1, total_scans), 2)
+            type_counts = {}
+            for r in rows:
+                types_val = r.get("types", "[]")
+                if isinstance(types_val, str):
+                    try:
+                        types_val = json.loads(types_val)
+                    except Exception:
+                        types_val = []
+                for t in types_val:
+                    type_counts[t] = type_counts.get(t, 0) + 1
+            return {
+                "total_scans": total_scans,
+                "total_entities": total_entities,
+                "avg_response_ms": avg_ms,
+                "entity_type_breakdown": type_counts,
+            }
+        except Exception as e:
+            print(f"[!] Supabase stats read failed: {e}")
+    # Fallback to in-memory
+    total_scans = len(scan_history_mem)
+    total_entities = sum(h["entity_count"] for h in scan_history_mem)
+    avg_ms = round(sum(h["processing_ms"] for h in scan_history_mem) / max(1, total_scans), 2)
     type_counts = {}
-    for h in scan_history:
+    for h in scan_history_mem:
         for t in h.get("types", []):
             type_counts[t] = type_counts.get(t, 0) + 1
-    
     return {
         "total_scans": total_scans,
         "total_entities": total_entities,

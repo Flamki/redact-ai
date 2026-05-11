@@ -407,6 +407,7 @@ function initFileUpload() {
   if (!zone) return;
 
   let uploadedFiles = [];
+  window.REDACTED_FILES = {}; // Store redacted content for downloading
 
   browseBtn?.addEventListener('click', () => fileInput.click());
   zone.addEventListener('click', (e) => { if (e.target === zone || e.target.closest('.upload-zone__icon,.upload-zone__title,.upload-zone__desc')) fileInput.click(); });
@@ -458,14 +459,15 @@ function initFileUpload() {
           const data = await res.json();
           bar.style.width = '100%';
 
-          fileResults.push({ name: f.name, size: f.size, entities: data.entity_count, ms: data.processing_ms });
+          window.REDACTED_FILES[f.name] = data.redacted_text;
+          fileResults.push({ name: f.name, size: f.size, entities: data.entity_count, ms: data.processing_ms, success: true });
           status.textContent = 'Done';
           status.className = 'badge badge--success';
         } catch (err) {
           bar.style.width = '100%';
           status.textContent = 'Error';
           status.className = 'badge badge--danger';
-          fileResults.push({ name: f.name, size: f.size, entities: '?', ms: '-' });
+          fileResults.push({ name: f.name, size: f.size, entities: '?', ms: '-', success: false });
         }
       } else {
         // Simulate for demo
@@ -479,13 +481,15 @@ function initFileUpload() {
 
     // Show results table
     resultsCard.style.display = 'block';
-    resultsTbody.innerHTML = fileResults.map(r => `
+    resultsTbody.innerHTML = fileResults.map((r, index) => `
       <tr>
         <td>${r.name}</td>
         <td>${(r.size / 1024).toFixed(1)} KB</td>
         <td style="font-weight:600;color:var(--text-primary);">${r.entities}</td>
-        <td><span class="badge badge--success">Redacted</span></td>
-        <td>${r.ms}ms</td>
+        <td><span class="badge ${r.success ? 'badge--success' : 'badge--danger'}">${r.success ? 'Redacted' : 'Failed'}</span></td>
+        <td>
+          ${r.success ? `<button class="btn btn--outline btn--small" onclick="downloadFile('${r.name}')">⬇️ Download</button>` : ''}
+        </td>
       </tr>
     `).join('');
 
@@ -493,7 +497,29 @@ function initFileUpload() {
     fetchStats();
     fetchHistory();
   });
+
+  document.getElementById('download-all-btn')?.addEventListener('click', () => {
+    let delay = 0;
+    Object.keys(window.REDACTED_FILES).forEach(filename => {
+      setTimeout(() => window.downloadFile(filename), delay);
+      delay += 500; // 500ms stagger to prevent browser blocking multiple downloads
+    });
+  });
 }
+
+window.downloadFile = function(filename) {
+  const content = window.REDACTED_FILES[filename];
+  if (!content) return;
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'redacted_' + filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 // ---- API Keys ----
 function initAPIKeys() {
