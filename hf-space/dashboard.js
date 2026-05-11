@@ -609,6 +609,15 @@ document.addEventListener('DOMContentLoaded', function() {
   initFileUpload();
   initAPIKeys();
 
+  // Export CSV button
+  var exportBtn = document.getElementById('export-history-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      var base = API_AVAILABLE ? API_BASE : '';
+      window.open(base + '/export?format=csv', '_blank');
+    });
+  }
+
   // Check API and fetch live data (non-blocking)
   checkAPI().then(function() {
     if (API_AVAILABLE) {

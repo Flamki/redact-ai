@@ -319,6 +319,76 @@ ENTITY_META = {
     "ORGANIZATION": {"icon": "🏢", "color": "#dfe6e9", "cssClass": "other", "label": "Organization"},
 }
 
+# ---- File Text Extraction ----
+def extract_text_from_file(content: bytes, ext: str) -> str:
+    """Extract text from various file formats"""
+    import io
+    
+    if ext == "pdf":
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(stream=content, filetype="pdf")
+            text_parts = []
+            for page in doc:
+                text_parts.append(page.get_text())
+            doc.close()
+            return "\n".join(text_parts)
+        except Exception as e:
+            print(f"[!] PDF extraction failed: {e}")
+            return ""
+    
+    elif ext in ("docx", "doc"):
+        try:
+            from docx import Document
+            doc = Document(io.BytesIO(content))
+            text_parts = []
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    text_parts.append(para.text)
+            # Also extract from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            text_parts.append(cell.text)
+            return "\n".join(text_parts)
+        except Exception as e:
+            print(f"[!] DOCX extraction failed: {e}")
+            return ""
+    
+    elif ext in ("xlsx", "xls"):
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+            text_parts = []
+            for ws in wb.worksheets:
+                for row in ws.iter_rows(values_only=True):
+                    cells = [str(c) for c in row if c is not None]
+                    if cells:
+                        text_parts.append(" ".join(cells))
+            wb.close()
+            return "\n".join(text_parts)
+        except Exception as e:
+            print(f"[!] XLSX extraction failed: {e}")
+            return ""
+    
+    elif ext == "csv":
+        import csv
+        text = content.decode("utf-8", errors="ignore")
+        reader = csv.reader(io.StringIO(text))
+        return " ".join(" ".join(row) for row in reader)
+    
+    elif ext == "json":
+        text = content.decode("utf-8", errors="ignore")
+        try:
+            data = json.loads(text)
+            return json.dumps(data) if isinstance(data, (dict, list)) else text
+        except json.JSONDecodeError:
+            return text
+    
+    else:  # txt and fallback
+        return content.decode("utf-8", errors="ignore")
+
 # ---- Request/Response Models ----
 class ScanRequest(BaseModel):
     text: str
@@ -464,33 +534,22 @@ def scan_batch(req: BatchScanRequest):
 
 @app.post("/api/v1/scan/file")
 async def scan_file(file: UploadFile = File(...)):
-    """Upload and scan a file for PII"""
+    """Upload and scan a file for PII — supports TXT, CSV, JSON, PDF, DOCX, XLSX"""
     if not file.filename:
         raise HTTPException(400, "No file provided")
     
     ext = file.filename.rsplit(".", 1)[-1].lower()
-    if ext not in ("txt", "csv", "json"):
-        raise HTTPException(400, f"Unsupported file type: .{ext}. Use .txt, .csv, or .json")
+    supported = ("txt", "csv", "json", "pdf", "docx", "doc", "xlsx", "xls")
+    if ext not in supported:
+        raise HTTPException(400, f"Unsupported file type: .{ext}. Supported: {', '.join(supported)}")
     
     content = await file.read()
-    text = content.decode("utf-8", errors="ignore")
-    
     start = time.time()
     
-    # For CSV/JSON, scan each cell/value
-    if ext == "csv":
-        import csv
-        import io
-        reader = csv.reader(io.StringIO(text))
-        all_text = " ".join(" ".join(row) for row in reader)
-    elif ext == "json":
-        try:
-            data = json.loads(text)
-            all_text = json.dumps(data) if isinstance(data, (dict, list)) else text
-        except json.JSONDecodeError:
-            all_text = text
-    else:
-        all_text = text
+    # Extract text based on file type
+    all_text = extract_text_from_file(content, ext)
+    if not all_text or not all_text.strip():
+        raise HTTPException(400, "Could not extract text from file")
     
     # Analyze
     results = analyzer.analyze(text=all_text, language="en")
@@ -638,6 +697,69 @@ def get_supported_entities():
             "color": meta["color"],
         })
     return {"entities": entities, "count": len(entities)}
+
+
+@app.get("/api/v1/export")
+def export_history(format: str = "csv"):
+    """Export scan history as CSV or JSON — for compliance/audit"""
+    import io
+    
+    # Fetch all history
+    items = []
+    if SUPABASE_AVAILABLE:
+        try:
+            resp = supabase.table("redact_scans") \
+                .select("*") \
+                .order("created_at", desc=True) \
+                .limit(1000) \
+                .execute()
+            for row in resp.data:
+                types_val = row.get("types", "[]")
+                if isinstance(types_val, str):
+                    try:
+                        types_val = json.loads(types_val)
+                    except Exception:
+                        types_val = []
+                items.append({
+                    "id": str(row["id"])[:8],
+                    "timestamp": row["created_at"],
+                    "source": row.get("source", ""),
+                    "entity_count": row.get("entity_count", 0),
+                    "types": ", ".join(types_val) if types_val else "",
+                    "processing_ms": row.get("processing_ms", 0),
+                    "preview": row.get("preview", ""),
+                })
+        except Exception as e:
+            print(f"[!] Export from Supabase failed: {e}")
+    else:
+        for h in reversed(scan_history_mem):
+            items.append({
+                "id": h.get("id", ""),
+                "timestamp": h.get("timestamp", ""),
+                "source": h.get("source", ""),
+                "entity_count": h.get("entity_count", 0),
+                "types": ", ".join(h.get("types", [])),
+                "processing_ms": h.get("processing_ms", 0),
+                "preview": h.get("preview", ""),
+            })
+    
+    if format == "json":
+        return JSONResponse(content={"export": items, "total": len(items), "exported_at": datetime.now(timezone.utc).isoformat()})
+    
+    # CSV format
+    import csv
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["id", "timestamp", "source", "entity_count", "types", "processing_ms", "preview"])
+    writer.writeheader()
+    writer.writerows(items)
+    
+    from fastapi.responses import StreamingResponse
+    csv_content = output.getvalue()
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=redactai_audit_log_{datetime.now().strftime('%Y%m%d')}.csv"}
+    )
 
 
 # ---- Serve Frontend Static Files ----
