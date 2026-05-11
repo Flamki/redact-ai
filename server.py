@@ -206,6 +206,34 @@ if GLINER_AVAILABLE:
     except Exception as e:
         print(f"[!] Could not load GLiNER: {e}")
 
+# ---- Custom Informal Date Recognizer ----
+import re
+from presidio_analyzer import Pattern, PatternRecognizer
+
+MONTHS = r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+
+informal_date_patterns = [
+    # "9th march", "10th march", "1st january", "23rd april"
+    Pattern("ordinal_month", rf"\b\d{{1,2}}(?:st|nd|rd|th)\s+{MONTHS}\b", 0.85),
+    # "march 9th", "april 10th", "january 1st"
+    Pattern("month_ordinal", rf"\b{MONTHS}\s+\d{{1,2}}(?:st|nd|rd|th)?\b", 0.85),
+    # "march 2024", "april 2025"
+    Pattern("month_year", rf"\b{MONTHS}\s+\d{{4}}\b", 0.80),
+    # "9th march 2024"
+    Pattern("ordinal_month_year", rf"\b\d{{1,2}}(?:st|nd|rd|th)\s+{MONTHS}\s+\d{{4}}\b", 0.90),
+    # standalone months in context: "in march", "on april", "by december"
+    Pattern("standalone_month", rf"\b(?:in|on|by|before|after|since|until|during)\s+{MONTHS}\b", 0.70),
+]
+
+date_recognizer = PatternRecognizer(
+    supported_entity="DATE_TIME",
+    name="InformalDateRecognizer",
+    patterns=informal_date_patterns,
+    supported_language="en",
+)
+registry.add_recognizer(date_recognizer)
+print("[+] Informal date recognizer added!")
+
 analyzer = AnalyzerEngine(nlp_engine=nlp_engine, registry=registry, supported_languages=["en"])
 anonymizer = AnonymizerEngine()
 print("[+] Presidio engines ready!")
