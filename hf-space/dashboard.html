@@ -395,8 +395,21 @@ print(response.json())</code></pre>
       </div>
     </div>
   </main>
-
-  <script src="app.js"></script>
+  <!-- Navigation function MUST load before external scripts -->
+  <script>
+    function switchPage(pageId) {
+      var pages = document.querySelectorAll('.page');
+      var links = document.querySelectorAll('.sidebar__link');
+      for (var i = 0; i < pages.length; i++) { pages[i].classList.remove('active'); }
+      for (var i = 0; i < links.length; i++) { links[i].classList.remove('active'); }
+      var page = document.getElementById('page-' + pageId);
+      var nav = document.getElementById('nav-' + pageId);
+      if (page) page.classList.add('active');
+      if (nav) nav.classList.add('active');
+      var title = document.getElementById('page-title');
+      if (title) title.textContent = nav ? nav.textContent.trim() : pageId;
+    }
+  </script>
   <script src="dashboard.js"></script>
 </body>
 </html>
