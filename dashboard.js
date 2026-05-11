@@ -3,12 +3,15 @@
 const API_BASE = window.location.origin + '/api/v1';
 let API_AVAILABLE = false;
 
-// Check if API is reachable
+// Check if API is reachable (compatible with all browsers)
 async function checkAPI() {
   try {
-    const res = await fetch(window.location.origin + '/api/health', { signal: AbortSignal.timeout(15000) });
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, 15000);
+    var res = await fetch(window.location.origin + '/api/health', { signal: controller.signal });
+    clearTimeout(timer);
     if (res.ok) { API_AVAILABLE = true; return true; }
-  } catch {}
+  } catch(e) {}
   return false;
 }
 
@@ -53,7 +56,7 @@ async function fetchStats() {
     LIVE_STATS = await res.json();
     updateOverviewCards();
     renderDonutChart();
-  } catch {}
+  } catch(e) {}
 }
 
 async function fetchHistory() {
@@ -64,7 +67,7 @@ async function fetchHistory() {
     SCAN_HISTORY = data.items || [];
     renderRecentTable();
     renderHistoryTable();
-  } catch {}
+  } catch(e) {}
 }
 
 // ---- Overview Cards (live data) ----
@@ -319,7 +322,7 @@ function initScannerPage() {
         fetchStats();
         fetchHistory();
         return;
-      } catch {}
+      } catch(e) {}
     }
 
     // Fallback to client-side regex
@@ -384,7 +387,7 @@ function initScannerPage() {
         });
         const data = await res.json();
         redacted = data.redacted;
-      } catch {}
+      } catch(e) {}
     } else if (typeof detectPII === 'function') {
       const findings = detectPII(text);
       for (let i = findings.length - 1; i >= 0; i--) {

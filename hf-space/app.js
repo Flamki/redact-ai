@@ -225,14 +225,17 @@ const API_BASE = window.location.origin + '/api/v1';
 
 async function checkAPIAvailability() {
   try {
-    const res = await fetch(window.location.origin + '/api/health', { method: 'GET', signal: AbortSignal.timeout(2000) });
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, 5000);
+    var res = await fetch(window.location.origin + '/api/health', { method: 'GET', signal: controller.signal });
+    clearTimeout(timer);
     if (res.ok) {
-      const data = await res.json();
+      var data = await res.json();
       usePresidioAPI = data.engine === 'presidio';
       console.log('🛡️ Presidio API connected — using NLP-powered detection');
       return true;
     }
-  } catch { /* API not available, use client-side */ }
+  } catch(e) { /* API not available, use client-side */ }
   console.log('📦 Using client-side regex detection (API not available)');
   return false;
 }
@@ -258,7 +261,7 @@ async function scanWithPresidio(text, mode = 'highlight') {
       end: e.end,
       score: e.score,
     }));
-  } catch {
+  } catch(e) {
     return null; // Fallback to client-side
   }
 }
@@ -353,7 +356,7 @@ function init() {
         });
         const data = await res.json();
         redactedText = data.redacted;
-      } catch {
+      } catch(e) {
         // Fallback
         const findings = detectPII(text);
         redactedText = text;
