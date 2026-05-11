@@ -9,7 +9,6 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
 </head>
 <body>
-  <div class="bg-grid"></div>
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
@@ -20,22 +19,22 @@
       </a>
     </div>
     <nav class="sidebar__nav">
-      <button class="sidebar__link active" data-page="overview" id="nav-overview">
+      <button class="sidebar__link active" data-page="overview" id="nav-overview" onclick="switchPage('overview')">
         <span class="sidebar__icon">📊</span> Overview
       </button>
-      <button class="sidebar__link" data-page="scanner" id="nav-scanner">
+      <button class="sidebar__link" data-page="scanner" id="nav-scanner" onclick="switchPage('scanner')">
         <span class="sidebar__icon">🛡️</span> Scanner
       </button>
-      <button class="sidebar__link" data-page="files" id="nav-files">
+      <button class="sidebar__link" data-page="files" id="nav-files" onclick="switchPage('files')">
         <span class="sidebar__icon">📁</span> File Upload
       </button>
-      <button class="sidebar__link" data-page="history" id="nav-history">
+      <button class="sidebar__link" data-page="history" id="nav-history" onclick="switchPage('history')">
         <span class="sidebar__icon">📋</span> History
       </button>
-      <button class="sidebar__link" data-page="api" id="nav-api">
+      <button class="sidebar__link" data-page="api" id="nav-api" onclick="switchPage('api')">
         <span class="sidebar__icon">🔑</span> API Keys
       </button>
-      <button class="sidebar__link" data-page="settings" id="nav-settings">
+      <button class="sidebar__link" data-page="settings" id="nav-settings" onclick="switchPage('settings')">
         <span class="sidebar__icon">⚙️</span> Settings
       </button>
     </nav>
