@@ -89,21 +89,41 @@
 .metric-card {
   display: flex; align-items: center; gap: 16px;
   padding: 24px; border-radius: var(--radius);
-  background: var(--bg-card); border: 1px solid var(--glass-border);
-  transition: var(--transition);
+  background: linear-gradient(135deg, rgba(20,20,30,0.9), rgba(30,30,45,0.7));
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
 }
-.metric-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.metric-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--cyan));
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.metric-card:hover::before { opacity: 1; }
+.metric-card:hover {
+  border-color: rgba(108,92,231,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(108,92,231,0.15), 0 4px 12px rgba(0,0,0,0.3);
+}
 .metric-card__icon {
-  width: 48px; height: 48px; border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .metric-card__data { flex: 1; }
-.metric-card__value { font-size: 28px; font-weight: 800; line-height: 1.2; }
-.metric-card__label { font-size: 13px; color: var(--text-muted); }
+.metric-card__value {
+  font-size: 32px; font-weight: 800; line-height: 1.1;
+  background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.metric-card__label { font-size: 13px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.3px; }
 .metric-card__trend {
-  font-size: 13px; font-weight: 600; padding: 4px 10px;
-  border-radius: 100px;
+  font-size: 12px; font-weight: 600; padding: 4px 10px;
+  border-radius: 100px; white-space: nowrap;
 }
 .metric-card__trend.up { color: var(--success); background: var(--success-bg); }
 .metric-card__trend.down { color: var(--danger); background: var(--danger-bg); }
@@ -112,14 +132,26 @@
 /* CHART CARDS */
 .chart-card {
   padding: 24px; border-radius: var(--radius);
-  background: var(--bg-card); border: 1px solid var(--glass-border);
+  background: linear-gradient(135deg, rgba(20,20,30,0.85), rgba(25,25,40,0.65));
+  border: 1px solid rgba(255,255,255,0.06);
   margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+.chart-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 .chart-card__header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 20px;
 }
-.chart-card__header h3 { font-size: 16px; font-weight: 600; }
+.chart-card__header h3 {
+  font-size: 16px; font-weight: 600;
+  background: linear-gradient(135deg, #fff, rgba(255,255,255,0.75));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .chart-select {
   padding: 6px 12px; border-radius: var(--radius-xs);
   background: var(--glass); border: 1px solid var(--glass-border);
@@ -300,3 +332,37 @@
   .dash-grid-4 { grid-template-columns: 1fr; }
   .topbar__search { display: none; }
 }
+
+/* ANIMATED COUNTER */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.metric-card__value {
+  animation: countUp 0.5s ease forwards;
+}
+
+/* OVERVIEW WELCOME GRADIENT */
+.page#page-overview .dash-grid-4 {
+  position: relative;
+}
+.page#page-overview .dash-grid-4::before {
+  content: ''; position: absolute; top: -60px; right: -40px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,92,231,0.08), transparent 70%);
+  pointer-events: none; z-index: -1;
+}
+
+/* BAR CHART GLOW */
+.bar {
+  box-shadow: 0 0 8px rgba(108,92,231,0.2);
+}
+.bar:hover {
+  box-shadow: 0 0 16px rgba(108,92,231,0.4);
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }

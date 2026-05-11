@@ -64,14 +64,41 @@ async function fetchHistory() {
 }
 
 // ---- Overview Cards (live data) ----
+function animateValue(el, end, suffix, duration) {
+  if (!el) return;
+  var start = 0;
+  var startTime = null;
+  var numEnd = parseFloat(end) || 0;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    var current = Math.round(eased * numEnd);
+    el.textContent = current.toLocaleString() + (suffix || '');
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = (typeof end === 'string' ? end : numEnd.toLocaleString()) + (suffix || '');
+  }
+  requestAnimationFrame(step);
+}
+
+function formatResponseTime(ms) {
+  if (ms < 1) return '<1ms';
+  if (ms < 1000) return Math.round(ms) + 'ms';
+  return (ms / 1000).toFixed(1) + 's';
+}
+
 function updateOverviewCards() {
   const el = (id) => document.getElementById(id);
   if (!el('metric-scans')) return;
 
-  el('metric-scans').textContent = LIVE_STATS.total_scans.toLocaleString();
-  el('metric-pii').textContent = LIVE_STATS.total_entities.toLocaleString();
-  el('metric-redacted').textContent = LIVE_STATS.total_entities.toLocaleString();
-  el('metric-ms').textContent = LIVE_STATS.avg_response_ms + 'ms';
+  // Animate the metric values
+  animateValue(el('metric-scans'), LIVE_STATS.total_scans, '', 800);
+  animateValue(el('metric-pii'), LIVE_STATS.total_entities, '', 800);
+  animateValue(el('metric-redacted'), LIVE_STATS.total_entities, '', 800);
+  
+  // Format response time nicely
+  var avgMs = LIVE_STATS.avg_response_ms || 0;
+  el('metric-ms').textContent = formatResponseTime(avgMs);
 
   // Update usage counter in sidebar
   const usage = el('usage-count');
@@ -81,12 +108,29 @@ function updateOverviewCards() {
   const fill = document.querySelector('.sidebar__plan-fill');
   if (fill) fill.style.width = Math.min(100, (LIVE_STATS.total_scans / 1000) * 100) + '%';
 
-  // Update trend badges
+  // Update trend badges with meaningful info
   if (LIVE_STATS.total_scans > 0) {
-    ['trend-scans', 'trend-pii', 'trend-redacted', 'trend-ms'].forEach(id => {
-      const badge = el(id);
-      if (badge) { badge.textContent = '● Live'; badge.className = 'metric-card__trend up'; }
-    });
+    var scanTrend = el('trend-scans');
+    var piiTrend = el('trend-pii');
+    var redTrend = el('trend-redacted');
+    var msTrend = el('trend-ms');
+    
+    if (scanTrend) { scanTrend.textContent = '● Live'; scanTrend.className = 'metric-card__trend up'; }
+    if (piiTrend) {
+      var avgPii = LIVE_STATS.total_scans > 0 ? (LIVE_STATS.total_entities / LIVE_STATS.total_scans).toFixed(1) : 0;
+      piiTrend.textContent = avgPii + '/scan';
+      piiTrend.className = 'metric-card__trend neutral';
+    }
+    if (redTrend) { redTrend.textContent = '100%'; redTrend.className = 'metric-card__trend up'; }
+    if (msTrend) {
+      if (avgMs < 500) {
+        msTrend.textContent = '⚡ Fast'; msTrend.className = 'metric-card__trend up';
+      } else if (avgMs < 2000) {
+        msTrend.textContent = '⚡ Good'; msTrend.className = 'metric-card__trend up';
+      } else {
+        msTrend.textContent = 'AI Models'; msTrend.className = 'metric-card__trend neutral';
+      }
+    }
   }
 }
 

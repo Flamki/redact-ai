@@ -75,7 +75,7 @@
     <div class="page active" id="page-overview">
       <div class="dash-grid-4">
         <div class="metric-card">
-          <div class="metric-card__icon" style="background:var(--accent-glow);color:var(--accent-light);">🔍</div>
+          <div class="metric-card__icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;">🔍</div>
           <div class="metric-card__data">
             <div class="metric-card__value" id="metric-scans">0</div>
             <div class="metric-card__label">Total Scans</div>
@@ -83,7 +83,7 @@
           <div class="metric-card__trend" id="trend-scans">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__icon" style="background:var(--danger-bg);color:var(--danger);">🚨</div>
+          <div class="metric-card__icon" style="background:linear-gradient(135deg,#e17055,#ff6b6b);color:#fff;">🚨</div>
           <div class="metric-card__data">
             <div class="metric-card__value" id="metric-pii">0</div>
             <div class="metric-card__label">PII Detected</div>
@@ -91,7 +91,7 @@
           <div class="metric-card__trend" id="trend-pii">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__icon" style="background:var(--success-bg);color:var(--success);">✅</div>
+          <div class="metric-card__icon" style="background:linear-gradient(135deg,#00b894,#55efc4);color:#fff;">✅</div>
           <div class="metric-card__data">
             <div class="metric-card__value" id="metric-redacted">0</div>
             <div class="metric-card__label">Auto-Redacted</div>
@@ -99,7 +99,7 @@
           <div class="metric-card__trend" id="trend-redacted">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__icon" style="background:var(--warning-bg);color:var(--warning);">⏱️</div>
+          <div class="metric-card__icon" style="background:linear-gradient(135deg,#fdcb6e,#f39c12);color:#fff;">⚡</div>
           <div class="metric-card__data">
             <div class="metric-card__value" id="metric-ms">0ms</div>
             <div class="metric-card__label">Avg Response</div>
@@ -112,7 +112,7 @@
       <div class="dash-grid-2">
         <div class="chart-card">
           <div class="chart-card__header">
-            <h3>Scans Over Time</h3>
+            <h3>📈 Scans Over Time</h3>
             <select class="chart-select" id="chart-range">
               <option value="7">Last 7 days</option>
               <option value="30" selected>Last 30 days</option>
@@ -125,7 +125,7 @@
         </div>
         <div class="chart-card">
           <div class="chart-card__header">
-            <h3>PII Types Breakdown</h3>
+            <h3>🎯 PII Types Breakdown</h3>
           </div>
           <div class="chart-area" id="chart-types">
             <div class="donut-chart" id="donut-chart"></div>
@@ -137,7 +137,7 @@
       <!-- RECENT SCANS -->
       <div class="chart-card">
         <div class="chart-card__header">
-          <h3>Recent Scans</h3>
+          <h3>🕐 Recent Scans</h3>
           <button class="btn btn--ghost btn--small" onclick="switchPage('history')">View All →</button>
         </div>
         <div class="table-wrap">
