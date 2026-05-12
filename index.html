@@ -7,9 +7,10 @@
   <title>RedactAI — Detect & Redact Sensitive Data Instantly | PII Scanner</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="landing.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'><i data-lucide="shield-check"></i></text></svg>">
 </head>
 <body>
+  <div class="bg-noise"></div>
   <div class="bg-grid"></div>
   <div class="bg-glow bg-glow--purple"></div>
   <div class="bg-glow bg-glow--cyan"></div>
@@ -18,7 +19,15 @@
   <nav class="navbar" id="navbar">
     <div class="container">
       <a href="#" class="navbar__logo">
-        <div class="navbar__logo-icon">R</div>
+        <svg class="logo-svg" viewBox="0 0 48 48" width="36" height="36" xmlns="http://www.w3.org/2000/svg" style="margin-right:8px;">
+          <g fill="#555555" class="logo-bars">
+            <rect x="10" y="12" width="4" height="24" rx="2" />
+            <rect x="18" y="6" width="4" height="36" rx="2" />
+            <rect x="26" y="14" width="4" height="20" rx="2" />
+            <rect x="34" y="10" width="4" height="28" rx="2" />
+          </g>
+          <rect class="logo-redaction" x="8" y="20" width="32" height="8" rx="2" fill="#ffffff" />
+        </svg>
         <div class="navbar__logo-text">Redact<span>AI</span></div>
       </a>
       <ul class="navbar__links">
@@ -27,7 +36,7 @@
         <li><a href="#demo">Live Demo</a></li>
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="dashboard.html" class="btn btn--outline btn--small">Log In</a></li>
-        <li><a href="dashboard.html" class="btn btn--primary btn--small">Start Free →</a></li>
+        <li><a href="dashboard.html" class="btn btn--primary btn--small">Start Free <i data-lucide="arrow-right"></i></a></li>
       </ul>
     </div>
   </nav>
@@ -39,17 +48,22 @@
         <span class="dot"></span>
         No install required · Start scanning in 5 seconds
       </div>
+      <div class="hero__trust-badge animate-in animate-delay-0" style="display:inline-flex; align-items:center; gap:8px; background:var(--success-bg); color:var(--success); padding:8px 20px; border-radius:30px; font-size:13px; font-weight:600; border:1px solid rgba(50,215,75,0.2); margin-bottom:32px;">
+        <i data-lucide="shield-check"></i> Zero Data Retention Policy. We never store your text.
+      </div>
       <h1 class="hero__title animate-in animate-delay-1">
-        Discover, Scan & Redact<br><span class="highlight">Sensitive Data</span> Instantly
+        Discover, Scan & Redact<br><span class="highlight hover-redact">Sensitive Data</span> Instantly
       </h1>
       <p class="hero__subtitle animate-in animate-delay-2">
         PII, PCI, PHI hiding in your text, files, or databases? RedactAI finds and removes it in seconds. Cloud-native, developer-friendly, and GDPR/HIPAA/DPDP compliant — with zero data stored.
       </p>
       <div class="hero__actions animate-in animate-delay-3">
-        <a href="dashboard.html" class="btn btn--primary btn--large">Start Scanning Free →</a>
-        <a href="#demo" class="btn btn--outline btn--large">▶ See Live Demo</a>
+        <a href="scan.html" class="btn btn--primary btn--large">Start Scanning Free <i data-lucide="arrow-right"></i></a>
+        <a href="#demo" class="btn btn--outline btn--large"><i data-lucide="play"></i> See Live Demo</a>
       </div>
-      <p class="hero__trust-text animate-in animate-delay-3">No credit card required · Free forever up to 1,000 docs/month</p>
+      <p class="hero__trust-text animate-in animate-delay-3" style="display:flex; align-items:center; justify-content:center; gap:8px; color:var(--text-muted); font-size:13px; margin-top:24px;">
+        <i data-lucide="lock" style="width:14px;height:14px;"></i> End-to-end encrypted · No credit card required · Free forever
+      </p>
 
       <div class="stats-bar animate-in animate-delay-3">
         <div class="stat">
@@ -78,7 +92,7 @@
       <div class="compliance-bar__inner">
         <span class="compliance-badge">🇪🇺 GDPR</span>
         <span class="compliance-badge">🏥 HIPAA</span>
-        <span class="compliance-badge">💳 PCI DSS</span>
+        <span class="compliance-badge"><i data-lucide="credit-card"></i> PCI DSS</span>
         <span class="compliance-badge">🇮🇳 DPDP Act</span>
         <span class="compliance-badge">🔒 SOC 2</span>
         <span class="compliance-badge">🇺🇸 CCPA</span>
@@ -98,21 +112,21 @@
       <div class="steps-grid">
         <div class="step-card">
           <div class="step-card__number">01</div>
-          <div class="step-card__icon">🔍</div>
+          <div class="step-card__icon"><i data-lucide="search"></i></div>
           <h3 class="step-card__title">Discover</h3>
           <p class="step-card__desc">Paste text, upload files (CSV, JSON, TXT, PDF), or hit our API. Our AI scans every character for personal and sensitive data.</p>
         </div>
         <div class="step-card__arrow">→</div>
         <div class="step-card">
           <div class="step-card__number">02</div>
-          <div class="step-card__icon">📊</div>
+          <div class="step-card__icon"><i data-lucide="bar-chart-2"></i></div>
           <h3 class="step-card__title">Analyze</h3>
           <p class="step-card__desc">See exactly what was found — names, emails, phones, IDs, credit cards — with color-coded highlighting and entity breakdowns.</p>
         </div>
         <div class="step-card__arrow">→</div>
         <div class="step-card">
           <div class="step-card__number">03</div>
-          <div class="step-card__icon">🛡️</div>
+          <div class="step-card__icon"><i data-lucide="shield-check"></i></div>
           <h3 class="step-card__title">Remediate</h3>
           <p class="step-card__desc">One click to redact, mask, or pseudonymize. Export clean files, copy redacted text, or process in bulk via API.</p>
         </div>
@@ -130,7 +144,7 @@
 
       <div class="usecase-grid">
         <div class="usecase-card">
-          <div class="usecase-card__icon">📋</div>
+          <div class="usecase-card__icon"><i data-lucide="clipboard-list"></i></div>
           <h3>Audits & Compliance</h3>
           <ul>
             <li>Confirm no PII lives outside designated systems</li>
@@ -140,7 +154,7 @@
           </ul>
         </div>
         <div class="usecase-card">
-          <div class="usecase-card__icon">🚨</div>
+          <div class="usecase-card__icon"><i data-lucide="alert-triangle"></i></div>
           <h3>Breach Response</h3>
           <ul>
             <li>React fast — identify whose data was exposed</li>
@@ -150,7 +164,7 @@
           </ul>
         </div>
         <div class="usecase-card">
-          <div class="usecase-card__icon">🤖</div>
+          <div class="usecase-card__icon"><i data-lucide="bot"></i></div>
           <h3>AI Data Protection</h3>
           <ul>
             <li>Scrub PII before feeding data into LLMs</li>
@@ -160,7 +174,7 @@
           </ul>
         </div>
         <div class="usecase-card">
-          <div class="usecase-card__icon">🔄</div>
+          <div class="usecase-card__icon"><i data-lucide="refresh-cw"></i></div>
           <h3>Data Migration</h3>
           <ul>
             <li>Classify data before migrating to cloud</li>
@@ -170,7 +184,7 @@
           </ul>
         </div>
         <div class="usecase-card">
-          <div class="usecase-card__icon">👨‍💼</div>
+          <div class="usecase-card__icon"><i data-lucide="briefcase"></i></div>
           <h3>Consultants & MSPs</h3>
           <ul>
             <li>Assess security risk across all client data</li>
@@ -180,7 +194,7 @@
           </ul>
         </div>
         <div class="usecase-card">
-          <div class="usecase-card__icon">💻</div>
+          <div class="usecase-card__icon"><i data-lucide="terminal"></i></div>
           <h3>Developer Workflows</h3>
           <ul>
             <li>Redact logs before developers access them</li>
@@ -204,30 +218,30 @@
 
       <div class="app-card">
         <div class="app-card__header">
-          <div class="app-card__title">🛡️ PII Scanner</div>
+          <div class="app-card__title"><i data-lucide="shield-check"></i> PII Scanner</div>
           <div class="app-card__actions">
             <div class="toggle-group">
               <button class="toggle-group__btn active" data-mode="highlight">Highlight</button>
               <button class="toggle-group__btn" data-mode="redact">Redact</button>
             </div>
-            <button class="btn btn--ghost btn--small" id="btn-sample">📝 Sample</button>
-            <button class="btn btn--ghost btn--small" id="btn-clear">✕ Clear</button>
-            <button class="btn btn--primary btn--small" id="btn-copy">📋 Copy Redacted</button>
+            <button class="btn btn--ghost btn--small" id="btn-sample"><i data-lucide="file-text"></i> Sample</button>
+            <button class="btn btn--ghost btn--small" id="btn-clear"><i data-lucide="x"></i> Clear</button>
+            <button class="btn btn--primary btn--small" id="btn-copy"><i data-lucide="clipboard-list"></i> Copy Redacted</button>
           </div>
         </div>
         <div class="editor-layout">
           <div class="editor-pane">
-            <div class="editor-pane__label">📥 Input — Paste your text</div>
+            <div class="editor-pane__label"><i data-lucide="download"></i> Input — Paste your text</div>
             <textarea id="pii-input" placeholder="Paste text containing personal information here...&#10;&#10;Try pasting a customer email, support ticket, or any text with names, emails, phone numbers, etc."></textarea>
           </div>
           <div class="editor-pane">
-            <div class="editor-pane__label">📤 Output — Detected PII</div>
+            <div class="editor-pane__label"><i data-lucide="upload"></i> Output — Detected PII</div>
             <div class="output-area" id="pii-output"></div>
           </div>
         </div>
       </div>
       <div class="entities-panel">
-        <div class="entities-panel__title">🔍 Detected Entities: <span id="entity-count" style="color: var(--accent-light);">0</span></div>
+        <div class="entities-panel__title"><i data-lucide="search"></i> Detected Entities: <span id="entity-count" style="color: var(--accent-light);">0</span></div>
         <div class="entities-grid" id="entities-grid"></div>
       </div>
     </div>
@@ -242,43 +256,101 @@
         <p class="section__desc">From emails to Aadhaar numbers — RedactAI catches what others miss.</p>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: var(--info-bg);">📧</div>
-          <h3 class="feature-card__title">Email Addresses</h3>
-          <p class="feature-card__desc">All formats including enterprise domains and plus-addressed emails.</p>
+      <div class="marquee-wrapper">
+        <!-- Track 1: Moving Right -->
+        <div class="marquee-track marquee-track--right">
+          <div class="marquee-group">
+            <div class="marquee-chip"><i data-lucide="mail" style="color:var(--info);"></i> Email Addresses</div>
+            <div class="marquee-chip"><i data-lucide="smartphone" style="color:var(--success);"></i> Phone Numbers</div>
+            <div class="marquee-chip"><i data-lucide="user" style="color:#f472b6;"></i> Person Names</div>
+            <div class="marquee-chip"><i data-lucide="id-card" style="color:var(--danger);"></i> Passport Numbers</div>
+            <div class="marquee-chip"><i data-lucide="credit-card" style="color:var(--warning);"></i> Credit Cards</div>
+            <div class="marquee-chip"><i data-lucide="globe" style="color:#22d3ee;"></i> IPv4 / IPv6 Addresses</div>
+          </div>
+          <div class="marquee-group" aria-hidden="true">
+            <div class="marquee-chip"><i data-lucide="mail" style="color:var(--info);"></i> Email Addresses</div>
+            <div class="marquee-chip"><i data-lucide="smartphone" style="color:var(--success);"></i> Phone Numbers</div>
+            <div class="marquee-chip"><i data-lucide="user" style="color:#f472b6;"></i> Person Names</div>
+            <div class="marquee-chip"><i data-lucide="id-card" style="color:var(--danger);"></i> Passport Numbers</div>
+            <div class="marquee-chip"><i data-lucide="credit-card" style="color:var(--warning);"></i> Credit Cards</div>
+            <div class="marquee-chip"><i data-lucide="globe" style="color:#22d3ee;"></i> IPv4 / IPv6 Addresses</div>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: var(--success-bg);">📱</div>
-          <h3 class="feature-card__title">Phone Numbers</h3>
-          <p class="feature-card__desc">Indian (+91), US (+1), and international formats with various separators.</p>
+
+        <!-- Track 2: Moving Left -->
+        <div class="marquee-track marquee-track--left" style="margin-top:20px;">
+          <div class="marquee-group">
+            <div class="marquee-chip"><i data-lucide="file-text" style="color:#94a3b8;"></i> US SSN</div>
+            <div class="marquee-chip"><i data-lucide="map-pin" style="color:#818cf8;"></i> ZIP / PIN Codes</div>
+            <div class="marquee-chip"><i data-lucide="hash" style="color:#a78bfa;"></i> India Aadhaar</div>
+            <div class="marquee-chip"><i data-lucide="briefcase" style="color:#38bdf8;"></i> UK National Insurance</div>
+            <div class="marquee-chip"><i data-lucide="building" style="color:#fbbf24;"></i> Bank Accounts / IBAN</div>
+            <div class="marquee-chip"><i data-lucide="fingerprint" style="color:#f43f5e;"></i> Driving Licenses</div>
+          </div>
+          <div class="marquee-group" aria-hidden="true">
+            <div class="marquee-chip"><i data-lucide="file-text" style="color:#94a3b8;"></i> US SSN</div>
+            <div class="marquee-chip"><i data-lucide="map-pin" style="color:#818cf8;"></i> ZIP / PIN Codes</div>
+            <div class="marquee-chip"><i data-lucide="hash" style="color:#a78bfa;"></i> India Aadhaar</div>
+            <div class="marquee-chip"><i data-lucide="briefcase" style="color:#38bdf8;"></i> UK National Insurance</div>
+            <div class="marquee-chip"><i data-lucide="building" style="color:#fbbf24;"></i> Bank Accounts / IBAN</div>
+            <div class="marquee-chip"><i data-lucide="fingerprint" style="color:#f43f5e;"></i> Driving Licenses</div>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: rgba(244,114,182,0.15);">👤</div>
-          <h3 class="feature-card__title">Person Names</h3>
-          <p class="feature-card__desc">Smart detection covering Indian and Western names with context analysis.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEVELOPER API -->
+  <section class="section" id="api">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Developer First</div>
+        <h2 class="section__title">Integrate with 3 Lines of Code</h2>
+        <p class="section__desc">Build powerful data protection into your apps in minutes with our blazing-fast REST API.</p>
+      </div>
+
+      <div class="ide-window">
+        <div class="ide-window__header">
+          <div class="ide-window__dots">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="ide-window__title">main.py</div>
+          <div class="ide-window__actions">
+            <button class="btn btn--primary btn--small" style="padding: 4px 12px; font-size: 12px;"><i data-lucide="play" style="width:12px;height:12px;margin-right:4px;"></i> Run</button>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: var(--danger-bg);">🆔</div>
-          <h3 class="feature-card__title">Government IDs</h3>
-          <p class="feature-card__desc">Aadhaar, PAN, SSN, Passport — all major ID formats across India and US.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: var(--warning-bg);">💳</div>
-          <h3 class="feature-card__title">Financial Data</h3>
-          <p class="feature-card__desc">Credit card numbers, bank references, and partial payment information.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-card__icon" style="background: rgba(34,211,238,0.15);">🌐</div>
-          <h3 class="feature-card__title">Network & Location</h3>
-          <p class="feature-card__desc">IP addresses, PIN/ZIP codes, and address patterns that reveal locations.</p>
+        <div class="ide-window__body">
+          <div class="ide-window__sidebar">
+            <div class="active"><i data-lucide="file-code"></i> main.py</div>
+            <div><i data-lucide="file-json"></i> package.json</div>
+            <div><i data-lucide="file-text"></i> .env</div>
+          </div>
+          <div class="ide-window__code">
+<pre><code><span style="color:#c678dd;">import</span> requests
+
+<span style="color:#5c6370;"># 1. Initialize with your API Key</span>
+headers = {<span style="color:#98c379;">"Authorization"</span>: <span style="color:#98c379;">"Bearer sk_live_..."</span>}
+
+<span style="color:#5c6370;"># 2. Send text containing sensitive data</span>
+payload = {
+    <span style="color:#98c379;">"text"</span>: <span style="color:#98c379;">"Invoice for Elon Musk, card ending in 4242"</span>,
+    <span style="color:#98c379;">"mode"</span>: <span style="color:#98c379;">"redact"</span>
+}
+
+<span style="color:#5c6370;"># 3. Get instant redacted results</span>
+response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/v1/scan"</span>, json=payload, headers=headers)
+<span style="color:#56b6c2;">print</span>(response.json())
+
+<span style="color:#5c6370;"># Output: 
+# { "redacted": "Invoice for [NAME], card ending in [CREDIT_CARD]" }</span></code></pre>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- WHY US vs THEM -->
-  <section class="section" id="compare">
+  <section class="section section--alt" id="compare">
     <div class="container">
       <div class="section__header">
         <div class="section__label">Why RedactAI</div>
@@ -297,15 +369,15 @@
           </thead>
           <tbody>
             <tr><td>Setup Time</td><td>30+ minutes (VMware/Docker)</td><td class="compare-win">5 seconds (paste & scan)</td></tr>
-            <tr><td>Free Tier</td><td>❌ "Schedule a demo"</td><td class="compare-win">✅ 1,000 docs/month free</td></tr>
+            <tr><td>Free Tier</td><td>❌ "Schedule a demo"</td><td class="compare-win"><i data-lucide="check-circle"></i> 1,000 docs/month free</td></tr>
             <tr><td>API Access</td><td>Enterprise plan only</td><td class="compare-win">All plans, including free</td></tr>
             <tr><td>Pricing</td><td>$10,000+/year</td><td class="compare-win">From $0/month</td></tr>
             <tr><td>Target User</td><td>Enterprise IT teams</td><td class="compare-win">Anyone — devs, startups, enterprise</td></tr>
             <tr><td>Data Storage</td><td>On your servers</td><td class="compare-win">Zero — nothing stored</td></tr>
             <tr><td>Processing Speed</td><td>Varies</td><td class="compare-win">&lt;50ms per request</td></tr>
             <tr><td>File Formats</td><td>400+</td><td>CSV, JSON, TXT (growing)</td></tr>
-            <tr><td>On-Premise</td><td>✅ Required</td><td>☁️ Cloud + self-host option</td></tr>
-            <tr><td>Compliance Reports</td><td>✅</td><td class="compare-win">✅ + Auto-generated</td></tr>
+            <tr><td>On-Premise</td><td><i data-lucide="check-circle"></i> Required</td><td>☁️ Cloud + self-host option</td></tr>
+            <tr><td>Compliance Reports</td><td><i data-lucide="check-circle"></i></td><td class="compare-win"><i data-lucide="check-circle"></i> + Auto-generated</td></tr>
           </tbody>
         </table>
       </div>
@@ -321,7 +393,7 @@
       </div>
       <div class="testimonials-grid">
         <div class="testimonial-card">
-          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <div class="testimonial-card__stars"><div style="display:flex;gap:4px;color:#ffd60a;"><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i></div></div>
           <p class="testimonial-card__text">"We integrated RedactAI's API into our support pipeline. Customer PII is now automatically stripped before tickets reach our analytics dashboard. Setup took 10 minutes."</p>
           <div class="testimonial-card__author">
             <div class="testimonial-card__avatar">AK</div>
@@ -332,7 +404,7 @@
           </div>
         </div>
         <div class="testimonial-card">
-          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <div class="testimonial-card__stars"><div style="display:flex;gap:4px;color:#ffd60a;"><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i></div></div>
           <p class="testimonial-card__text">"Manual PII review of our database would have taken months. RedactAI scanned 50,000 records in under a minute and generated a compliance report automatically."</p>
           <div class="testimonial-card__author">
             <div class="testimonial-card__avatar">SM</div>
@@ -343,7 +415,7 @@
           </div>
         </div>
         <div class="testimonial-card">
-          <div class="testimonial-card__stars">⭐⭐⭐⭐⭐</div>
+          <div class="testimonial-card__stars"><div style="display:flex;gap:4px;color:#ffd60a;"><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i></div></div>
           <p class="testimonial-card__text">"We use RedactAI to clean training data before feeding it to our ML models. It catches things regex never would — contextual names, ambiguous phone formats. Game changer."</p>
           <div class="testimonial-card__author">
             <div class="testimonial-card__avatar">DP</div>
@@ -394,7 +466,7 @@
             <li>Scan history & export</li>
             <li>Priority email support</li>
           </ul>
-          <a href="dashboard.html" class="btn btn--primary" style="width:100%;justify-content:center;">Start 14-Day Trial →</a>
+          <a href="dashboard.html" class="btn btn--primary" style="width:100%;justify-content:center;">Start 14-Day Trial <i data-lucide="arrow-right"></i></a>
         </div>
         <div class="pricing-card">
           <div class="pricing-card__name">Enterprise</div>
@@ -424,15 +496,51 @@
         <h2 class="cta-card__title">Take Control of Your Sensitive Data Today</h2>
         <p class="cta-card__desc">Join hundreds of companies using RedactAI to protect customer data, comply with regulations, and prevent breaches.</p>
         <div class="cta-card__reasons">
-          <div class="cta-reason">✅ Instant PII detection — no setup needed</div>
-          <div class="cta-reason">✅ Comply with GDPR, HIPAA, PCI DSS, DPDP</div>
-          <div class="cta-reason">✅ Clean data before passing to AI or 3rd parties</div>
+          <div class="cta-reason"><i data-lucide="check-circle"></i> Instant PII detection — no setup needed</div>
+          <div class="cta-reason"><i data-lucide="check-circle"></i> Comply with GDPR, HIPAA, PCI DSS, DPDP</div>
+          <div class="cta-reason"><i data-lucide="check-circle"></i> Clean data before passing to AI or 3rd parties</div>
         </div>
         <div class="hero__actions" style="margin-top:32px;">
-          <a href="dashboard.html" class="btn btn--primary btn--large">Start Scanning Free →</a>
+          <a href="scan.html" class="btn btn--primary btn--large">Start Scanning Free <i data-lucide="arrow-right"></i></a>
           <a href="#demo" class="btn btn--outline btn--large">Try Live Demo</a>
         </div>
         <p style="margin-top:16px;font-size:13px;color:var(--text-muted);">No credit card · No install · Free forever up to 1,000 docs</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHADOW AI SCANNER -->
+  <section class="section section--dark-scan" id="shadow-scan">
+    <div class="container" style="max-width: 800px; text-align: center;">
+      <div class="scan-pitch-badge animate-in">Free proof report — No sign-up required</div>
+      <h2 class="section__title animate-in" style="font-size: 42px; margin-bottom: 24px;">See what your AI is leaking</h2>
+      <p class="section__subtitle animate-in" style="font-size: 16px; margin-bottom: 40px; color: var(--text-secondary); max-width: 100%;">
+        Find shadow AI endpoints, exposed Indian PII, pre-consent trackers, and buyer-facing DPDP gaps before your customer asks for proof.
+      </p>
+      
+      <div class="shadow-scan-box animate-in">
+        <div class="scan-remaining">2 free scans remaining this month.</div>
+        
+        <form class="scan-form" id="shadowScanForm">
+          <div class="scan-step" id="scanStep1">
+            <label>Website URL to scan</label>
+            <div class="scan-input-group">
+              <input type="url" required placeholder="https://yourwebsite.com" id="scanUrl" />
+              <button type="button" class="btn btn--primary" id="btnNextScan">Next <i data-lucide="arrow-right"></i></button>
+            </div>
+          </div>
+          
+          <div class="scan-step" id="scanStep2" style="display:none;">
+            <label>Email address for report delivery</label>
+            <div class="scan-input-group">
+              <input type="email" placeholder="Email (optional - to receive your report)" id="scanEmail" />
+              <button type="submit" class="btn btn--primary" style="background: #ff5f56; border-color: #ff5f56; color: white;">Find data breach</button>
+            </div>
+            <p class="scan-disclaimer">
+              <i data-lucide="shield"></i> Takes 2 minutes. We crawl only publicly accessible pages. No data is stored without your consent.
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   </section>
@@ -443,7 +551,15 @@
       <div class="footer-grid">
         <div class="footer-col">
           <a href="#" class="navbar__logo" style="margin-bottom:16px;">
-            <div class="navbar__logo-icon">R</div>
+            <svg class="logo-svg" viewBox="0 0 48 48" width="36" height="36" xmlns="http://www.w3.org/2000/svg" style="margin-right:8px;">
+              <g fill="#555555" class="logo-bars">
+                <rect x="10" y="12" width="4" height="24" rx="2" />
+                <rect x="18" y="6" width="4" height="36" rx="2" />
+                <rect x="26" y="14" width="4" height="20" rx="2" />
+                <rect x="34" y="10" width="4" height="28" rx="2" />
+              </g>
+              <rect class="logo-redaction" x="8" y="20" width="32" height="8" rx="2" fill="#ffffff" />
+            </svg>
             <div class="navbar__logo-text">Redact<span>AI</span></div>
           </a>
           <p style="font-size:14px;color:var(--text-muted);line-height:1.7;">Detect and redact sensitive data instantly. Cloud-native, developer-friendly, and built for compliance.</p>
@@ -472,11 +588,226 @@
       </div>
       <div class="footer-bottom">
         <p>© 2026 RedactAI. All rights reserved.</p>
-        <p>Built with 🛡️ for data privacy.</p>
+        <p>Built with <i data-lucide="shield-check"></i> for data privacy.</p>
       </div>
     </div>
   </footer>
 
+  <script>
+    document.querySelectorAll('.navbar__logo').forEach(logo => {
+      logo.addEventListener('click', (e) => {
+        e.preventDefault();
+        logo.classList.remove('is-animating');
+        void logo.offsetWidth;
+        logo.classList.add('is-animating');
+        setTimeout(() => {
+          logo.classList.remove('is-animating');
+          if (logo.getAttribute('href') && logo.getAttribute('href') !== '#') {
+            window.location.href = logo.getAttribute('href');
+          }
+        }, 600);
+      });
+    });
+  </script>
+  <!-- REDACTBOT MASCOT -->
+  <div class="redact-bot" id="redactBot">
+    <div class="bot-history" id="botHistory"></div>
+    <div class="redact-bot__speech-bubble" id="botBubble">
+      <span id="botText">Zero retention... I literally have no memory!</span>
+      <form id="botForm" style="display:none; margin:0; padding:0;">
+        <input type="text" id="botInput" class="redact-bot__input" placeholder="Tell me a secret..." autocomplete="off" />
+      </form>
+    </div>
+    <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="redact-bot__svg">
+      <rect x="25" y="40" width="50" height="40" rx="10" fill="#1e1e24" stroke="var(--glass-border)" stroke-width="2"/>
+      <path d="M 30 40 C 30 15, 70 15, 70 40" fill="#282c34" stroke="var(--glass-border)" stroke-width="2"/>
+      <rect x="35" y="25" width="30" height="10" rx="4" fill="#000" />
+      <circle cx="40" cy="30" r="3" fill="var(--accent-light)" class="bot-eye"/>
+      <path d="M 25 50 L 10 60" stroke="#1e1e24" stroke-width="6" stroke-linecap="round"/>
+      <path d="M 75 50 L 90 60" stroke="#1e1e24" stroke-width="6" stroke-linecap="round"/>
+      <rect x="85" y="50" width="8" height="24" fill="#111" rx="2" transform="rotate(-30 85 50)"/>
+      <rect x="85" y="50" width="8" height="6" fill="#ff5f56" rx="2" transform="rotate(-30 85 50)"/>
+    </svg>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>lucide.createIcons();</script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="app.js"></script>
+  <script>
+    const botContainer = document.getElementById('redactBot');
+    const botText = document.getElementById('botText');
+    const botForm = document.getElementById('botForm');
+    const botInput = document.getElementById('botInput');
+    const botHistory = document.getElementById('botHistory');
+    
+    let isChatting = false;
+    let storyInterval;
+    let chatTimeout;
+
+    const stories = [
+      "Psst! I found an SSN over there.",
+      "Redacting is my favorite hobby.",
+      "Your data is completely safe with me!",
+      "Zero retention... I literally have no memory.",
+      "Scanning... 100% secure.",
+      "Did someone say GDPR compliant?"
+    ];
+
+    function startStories() {
+      clearInterval(storyInterval);
+      storyInterval = setInterval(() => {
+        if (!isChatting) botText.textContent = stories[Math.floor(Math.random() * stories.length)];
+      }, 6000);
+    }
+    startStories();
+
+    // Click to start chat
+    botContainer.addEventListener('click', (e) => {
+      if(isChatting) return;
+      isChatting = true;
+      botContainer.classList.add('is-chatting');
+      botText.style.display = 'none';
+      botForm.style.display = 'block';
+      botInput.focus();
+      clearInterval(storyInterval);
+      clearTimeout(chatTimeout);
+    });
+
+    // Stop propagation so clicking input doesn't trigger anything else
+    botForm.addEventListener('click', e => e.stopPropagation());
+
+    function addHistoryMsg(html, type) {
+      const msg = document.createElement('div');
+      msg.className = `bot-history__msg bot-history__msg--${type}`;
+      msg.innerHTML = html;
+      botHistory.appendChild(msg);
+      // Keep only last 3 messages so it doesn't flood the screen
+      if(botHistory.children.length > 4) {
+        botHistory.removeChild(botHistory.firstChild);
+      }
+    }
+
+    // Handle chat submission
+    botForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = botInput.value.trim();
+      if(!text) return;
+      
+      botInput.value = '';
+      addHistoryMsg(`<strong>You:</strong> ${text}`, 'user');
+      
+      // Fireworks AI LLM Redaction
+      let redactedText = text;
+      botInput.placeholder = "AI is Scanning...";
+      botInput.disabled = true;
+
+      try {
+        const FIREWORKS_KEY = "fw_NSJjJEivHfD8qWaurKkdcu";
+        const res = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${FIREWORKS_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "accounts/fireworks/models/deepseek-v4-pro",
+            messages: [
+              { role: "system", content: "You are RedactBot, the official AI mascot for RedactAI. RedactAI is an enterprise-grade API that instantly discovers and redacts PII, PCI, and PHI from text, files, and databases with a strict zero-data retention policy. You are helpful, snarky, and obsessed with data privacy. If the user asks a question about RedactAI or the website, answer it concisely. IMPORTANT: If the user's message contains ANY personal data (names, emails, passwords, phone numbers, credit cards), you MUST reply by fully redacting that data with tags like [NAME] or [EMAIL], and proudly point out that you saved them from a privacy breach. Keep all responses under 3 sentences." },
+              { role: "user", content: text }
+            ],
+            temperature: 0.5,
+            max_tokens: 200
+          })
+        });
+        
+        if(!res.ok) throw new Error("API failed");
+        const data = await res.json();
+        if(data.choices && data.choices.length > 0) {
+          redactedText = data.choices[0].message.content.trim().replace(/^"|"$/g, '');
+        } else {
+          redactedText = fallbackRedact(text);
+        }
+      } catch(err) {
+        redactedText = fallbackRedact(text);
+      }
+
+      addHistoryMsg(`<strong>Bot:</strong> ${redactedText}`, 'bot');
+      botInput.placeholder = "Tell me a secret...";
+      botInput.disabled = false;
+      botInput.focus();
+      
+      // Fun Confetti if PII was found
+      if(redactedText !== text && typeof confetti === 'function') {
+        const rect = botContainer.getBoundingClientRect();
+        confetti({
+          particleCount: 30, spread: 50,
+          origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
+          colors: ['#0ea5e9', '#8b5cf6', '#f43f5e']
+        });
+      }
+
+      // Auto close after 15 seconds of inactivity
+      clearTimeout(chatTimeout);
+      chatTimeout = setTimeout(() => {
+        isChatting = false;
+        botContainer.classList.remove('is-chatting');
+        botForm.style.display = 'none';
+        botText.style.display = 'block';
+        botText.textContent = "Secrets deleted. I remember nothing.";
+        botHistory.innerHTML = ''; // clear history
+        startStories();
+      }, 15000);
+    });
+
+    function fallbackRedact(text) {
+      if (typeof detectPII !== 'function') return text;
+      const findings = detectPII(text);
+      if (findings.length === 0) return text;
+      
+      let res = text;
+      for (let i = findings.length - 1; i >= 0; i--) {
+        res = res.substring(0, findings[i].start) + '<span style="color:var(--accent-light);">'+findings[i].redacted+'</span>' + res.substring(findings[i].end);
+      }
+      return res;
+    }
+
+    // ===== SHADOW AI SCANNER LOGIC =====
+    const btnNextScan = document.getElementById('btnNextScan');
+    const scanStep1 = document.getElementById('scanStep1');
+    const scanStep2 = document.getElementById('scanStep2');
+    const scanUrl = document.getElementById('scanUrl');
+    
+    if(btnNextScan) {
+      btnNextScan.addEventListener('click', () => {
+        if(!scanUrl.value) {
+          scanUrl.focus();
+          return;
+        }
+        scanStep1.style.display = 'none';
+        scanStep2.style.display = 'block';
+        document.getElementById('scanEmail').focus();
+      });
+    }
+    const shadowScanForm = document.getElementById('shadowScanForm');
+    if(shadowScanForm) {
+      shadowScanForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = document.getElementById('scanUrl')?.value || '';
+        // Redirect to the real scan page with URL
+        window.location.href = 'scan.html?url=' + encodeURIComponent(url);
+      });
+    }
+
+    // Also wire the Next button in step 1 to go directly to scan page
+    const btnNextScanLanding = document.getElementById('btnNextScan');
+    if (btnNextScanLanding) {
+      btnNextScanLanding.addEventListener('click', () => {
+        const url = document.getElementById('scanUrl')?.value || '';
+        if (!url) { document.getElementById('scanUrl')?.focus(); return; }
+        window.location.href = 'scan.html?url=' + encodeURIComponent(url);
+      });
+    }
+  </script>
 </body>
 </html>

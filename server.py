@@ -16,20 +16,33 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-# ---- Supabase Setup ----
+# ---- Supabase Setup (with timeout to prevent startup hang) ----
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://amklcfiyxeomdueeptyu.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFta2xjZml5eGVvbWR1ZWVwdHl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDQ2OTIsImV4cCI6MjA5NDA4MDY5Mn0.WNvPc9hrorOw_pMI2PS8pVPklfqwXCQH3kBJSwja6dk")
 SUPABASE_AVAILABLE = False
+supabase = None
 try:
     from supabase import create_client
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    # Quick connectivity check
-    supabase.table("redact_scans").select("id").limit(1).execute()
-    SUPABASE_AVAILABLE = True
-    print("[+] Supabase connected! Persistent history enabled.")
+    import threading
+    _sb_result = [False]
+    def _check_sb():
+        try:
+            sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+            sb.table("redact_scans").select("id").limit(1).execute()
+            _sb_result[0] = sb
+        except:
+            pass
+    t = threading.Thread(target=_check_sb, daemon=True)
+    t.start()
+    t.join(timeout=5)  # Max 5 seconds for Supabase check
+    if _sb_result[0]:
+        supabase = _sb_result[0]
+        SUPABASE_AVAILABLE = True
+        print("[+] Supabase connected! Persistent history enabled.")
+    else:
+        print("[!] Supabase timed out or failed, falling back to in-memory history")
 except Exception as e:
     print(f"[!] Supabase unavailable ({e}), falling back to in-memory history")
-    supabase = None
 
 # ---- Presidio Setup ----
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
@@ -41,11 +54,14 @@ from presidio_anonymizer.entities import OperatorConfig
 from presidio_analyzer import EntityRecognizer, RecognizerResult
 
 PIIRANHA_AVAILABLE = False
-try:
-    from transformers import pipeline as hf_pipeline
-    PIIRANHA_AVAILABLE = True
-except ImportError:
-    print("[!] transformers not installed, skipping Piiranha model")
+if os.environ.get("LOAD_PIIRANHA", "0") == "1":
+    try:
+        from transformers import pipeline as hf_pipeline
+        PIIRANHA_AVAILABLE = True
+    except ImportError:
+        print("[!] transformers not installed, skipping Piiranha model")
+else:
+    print("[*] Piiranha model disabled (set LOAD_PIIRANHA=1 to enable)")
 
 class PiiranhaRecognizer(EntityRecognizer):
     """Custom Presidio recognizer using the Piiranha PII model (DeBERTa-v3, 99.4% accuracy)"""
@@ -148,11 +164,14 @@ if PIIRANHA_AVAILABLE:
 
 # ---- GLiNER Zero-Shot NER (contextual understanding) ----
 GLINER_AVAILABLE = False
-try:
-    from gliner import GLiNER as GLiNERModel
-    GLINER_AVAILABLE = True
-except ImportError:
-    print("[!] gliner not installed, skipping zero-shot NER")
+if os.environ.get("LOAD_GLINER", "0") == "1":
+    try:
+        from gliner import GLiNER as GLiNERModel
+        GLINER_AVAILABLE = True
+    except ImportError:
+        print("[!] gliner not installed, skipping zero-shot NER")
+else:
+    print("[*] GLiNER model disabled (set LOAD_GLINER=1 to enable)")
 
 class GLiNERRecognizer(EntityRecognizer):
     """Zero-shot NER using GLiNER — understands context, no training needed.
@@ -829,6 +848,866 @@ def export_history(format: str = "csv"):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=redactai_audit_log_{datetime.now().strftime('%Y%m%d')}.csv"}
     )
+
+
+# =============================================
+# SHADOW AI / WEBSITE PRIVACY SCANNER
+# Dual-engine: Jina Reader API (JS-rendered text)
+# + requests/BS4 (raw HTML tracker analysis).
+# Production-grade — works on any cloud platform.
+# Inspired by The Markup's Blacklight scanner.
+# =============================================
+
+# Known tracker signatures — domain patterns and their categories
+TRACKER_SIGNATURES = {
+    # Analytics
+    "google-analytics.com": {"name": "Google Analytics", "category": "analytics", "risk": "medium"},
+    "googletagmanager.com": {"name": "Google Tag Manager", "category": "analytics", "risk": "medium"},
+    "analytics.google.com": {"name": "Google Analytics", "category": "analytics", "risk": "medium"},
+    "gtag/js": {"name": "Google Global Site Tag", "category": "analytics", "risk": "medium"},
+    "plausible.io": {"name": "Plausible Analytics", "category": "analytics", "risk": "low"},
+    "umami.is": {"name": "Umami Analytics", "category": "analytics", "risk": "low"},
+    "matomo": {"name": "Matomo Analytics", "category": "analytics", "risk": "low"},
+    "mixpanel.com": {"name": "Mixpanel", "category": "analytics", "risk": "high"},
+    "segment.com": {"name": "Segment", "category": "analytics", "risk": "high"},
+    "amplitude.com": {"name": "Amplitude", "category": "analytics", "risk": "high"},
+    "heap-analytics": {"name": "Heap Analytics", "category": "analytics", "risk": "high"},
+    "heapanalytics.com": {"name": "Heap Analytics", "category": "analytics", "risk": "high"},
+    "clarity.ms": {"name": "Microsoft Clarity", "category": "session_recording", "risk": "high"},
+    # Advertising / Retargeting
+    "facebook.net": {"name": "Meta Pixel (Facebook)", "category": "advertising", "risk": "high"},
+    "facebook.com/tr": {"name": "Meta Pixel Tracking", "category": "advertising", "risk": "high"},
+    "fbevents.js": {"name": "Meta Pixel Events", "category": "advertising", "risk": "high"},
+    "connect.facebook": {"name": "Facebook Connect", "category": "advertising", "risk": "high"},
+    "doubleclick.net": {"name": "Google Ads (DoubleClick)", "category": "advertising", "risk": "high"},
+    "googlesyndication.com": {"name": "Google AdSense", "category": "advertising", "risk": "high"},
+    "googleadservices.com": {"name": "Google Ads Conversion", "category": "advertising", "risk": "high"},
+    "ads-twitter.com": {"name": "X (Twitter) Ads", "category": "advertising", "risk": "high"},
+    "analytics.tiktok.com": {"name": "TikTok Pixel", "category": "advertising", "risk": "high"},
+    "snap.licdn.com": {"name": "LinkedIn Insight Tag", "category": "advertising", "risk": "high"},
+    "px.ads.linkedin.com": {"name": "LinkedIn Ads Pixel", "category": "advertising", "risk": "high"},
+    "ads.reddit.com": {"name": "Reddit Pixel", "category": "advertising", "risk": "medium"},
+    "static.criteo.net": {"name": "Criteo Retargeting", "category": "advertising", "risk": "high"},
+    "bat.bing.com": {"name": "Microsoft Ads UET", "category": "advertising", "risk": "medium"},
+    # Session Recording
+    "hotjar.com": {"name": "Hotjar", "category": "session_recording", "risk": "high"},
+    "fullstory.com": {"name": "FullStory", "category": "session_recording", "risk": "high"},
+    "mouseflow.com": {"name": "Mouseflow", "category": "session_recording", "risk": "high"},
+    "smartlook.com": {"name": "Smartlook", "category": "session_recording", "risk": "high"},
+    "logrocket.com": {"name": "LogRocket", "category": "session_recording", "risk": "high"},
+    "inspectlet.com": {"name": "Inspectlet", "category": "session_recording", "risk": "high"},
+    # Customer Data Platforms
+    "intercom.io": {"name": "Intercom", "category": "cdp", "risk": "medium"},
+    "drift.com": {"name": "Drift Chat", "category": "cdp", "risk": "medium"},
+    "hubspot.com": {"name": "HubSpot", "category": "cdp", "risk": "medium"},
+    "hs-scripts.com": {"name": "HubSpot Scripts", "category": "cdp", "risk": "medium"},
+    "crisp.chat": {"name": "Crisp Chat", "category": "cdp", "risk": "medium"},
+    "tawk.to": {"name": "Tawk.to Chat", "category": "cdp", "risk": "low"},
+    "zendesk.com": {"name": "Zendesk", "category": "cdp", "risk": "medium"},
+    # Fingerprinting
+    "fingerprintjs": {"name": "FingerprintJS", "category": "fingerprinting", "risk": "high"},
+    "fpjs.io": {"name": "Fingerprint Pro", "category": "fingerprinting", "risk": "high"},
+}
+
+# AI / LLM endpoint patterns
+AI_ENDPOINT_PATTERNS = [
+    "api.openai.com", "api.anthropic.com", "api.fireworks.ai",
+    "api.together.xyz", "api.replicate.com", "api.groq.com",
+    "generativelanguage.googleapis.com", "api.cohere.ai",
+    "api-inference.huggingface.co", "api.mistral.ai",
+    "chatgpt", "gpt-4", "gpt-3", "claude", "gemini",
+    "sk-proj-", "sk-ant-", "sk_live_", "fw_",  # API key patterns
+]
+
+# ---- BLACKLIGHT-GRADE ADVANCED DETECTION PATTERNS ----
+# Ported from The Markup's Blacklight methodology:
+# https://themarkup.org/blacklight/2020/09/22/how-we-built-a-real-time-privacy-inspector
+
+# Canvas fingerprinting — JS API calls that uniquely identify browsers
+# (Blacklight's canvas_fingerprinters test)
+CANVAS_FINGERPRINT_PATTERNS = [
+    "toDataURL",            # HTMLCanvasElement.toDataURL() — exports canvas as image
+    "getImageData",         # CanvasRenderingContext2D.getImageData() — reads pixel data
+    "measureText",          # Used with specific fonts to detect installed fonts
+    "isPointInPath",        # Geometry-based fingerprinting
+    "isPointInStroke",
+    "canvas.toBlob",        # Another canvas export method
+    "OffscreenCanvas",      # Off-screen canvas (stealthier fingerprinting)
+    "WebGLRenderingContext", # WebGL fingerprinting
+    "WEBGL_debug_renderer_info", # GPU fingerprinting via WebGL
+    "getExtension",         # WebGL extensions for fingerprinting
+]
+
+# Key logging — scripts that capture keystrokes before form submission
+# (Blacklight's key_logging test)
+KEYLOGGING_PATTERNS = [
+    "addEventListener('keydown'",
+    'addEventListener("keydown"',
+    "addEventListener('keypress'",
+    'addEventListener("keypress"',
+    "addEventListener('keyup'",
+    'addEventListener("keyup"',
+    "addEventListener('input'",
+    'addEventListener("input"',
+    "onkeydown",
+    "onkeypress",
+    "onkeyup",
+    "document.onkeydown",
+    "document.onkeypress",
+    "inputMode",
+    "event.key",
+    "event.keyCode",
+    "event.charCode",
+    "event.which",
+]
+
+# Session recorder deep patterns — scripts that record mouse/scroll/clicks
+# (Blacklight's session_recorders test)
+SESSION_RECORDER_PATTERNS = [
+    # Mouse tracking
+    "addEventListener('mousemove'",
+    'addEventListener("mousemove"',
+    "addEventListener('mousedown'",
+    "addEventListener('mouseup'",
+    "addEventListener('click'",
+    "addEventListener('scroll'",
+    "addEventListener('touchstart'",
+    "addEventListener('touchmove'",
+    # Known session recorder libraries
+    "rrweb",                    # Open-source session recorder
+    "rrwebPlayer",
+    "__rrweb",
+    "sessionstack.com",
+    "decibelinsight.net",
+    "quantummetric.com",
+    "contentsquare.com",
+    "glassbox.com",
+    "clicktale.net",
+    "crazyegg.com",
+    "Lucky Orange",
+    "luckyorange.com",
+    # DOM mutation observation (used by recorders)
+    "MutationObserver",
+    "IntersectionObserver",
+]
+
+# Facebook Pixel deep event patterns (Blacklight's fb_pixel_events test)
+FB_PIXEL_EVENTS = [
+    "fbq('track'",
+    'fbq("track"',
+    "fbq('init'",
+    'fbq("init"',
+    "fbq('trackCustom'",
+    "_fbq",
+    "facebook.com/tr?",
+    "PageView",            # FB standard events
+    "ViewContent",
+    "AddToCart",
+    "Purchase",
+    "CompleteRegistration",
+    "Lead",
+    "InitiateCheckout",
+]
+
+# Google Analytics deep event patterns (Blacklight's google_analytics_events test)
+GA_EVENT_PATTERNS = [
+    "gtag('event'",
+    'gtag("event"',
+    "gtag('config'",
+    'gtag("config"',
+    "ga('send'",
+    'ga("send"',
+    "ga('create'",
+    "_gaq.push",
+    "__gaTracker",
+    "GoogleAnalyticsObject",
+    "analytics.js",
+    "measurement_id",
+    "send_page_view",
+    "page_view",
+    "enhanced_conversions",
+    "user_id",              # User ID tracking (high privacy risk)
+    "client_id",
+]
+
+# Known third-party tracking domains (expanded from Blacklight + disconnect.me lists)
+TRACKING_DOMAINS = [
+    # Data brokers / ad networks
+    "adnxs.com", "adsrvr.org", "casalemedia.com", "contextweb.com",
+    "demdex.net", "dotomi.com", "exponential.com", "eyereturn.com",
+    "indexexchange.com", "liadm.com", "mathtag.com", "mookie1.com",
+    "openx.net", "pubmatic.com", "rlcdn.com", "rubiconproject.com",
+    "scorecardresearch.com", "serving-sys.com", "sharethrough.com",
+    "simpli.fi", "sitescout.com", "smartadserver.com", "taboola.com",
+    "outbrain.com", "tapad.com", "turn.com", "quantserve.com",
+    # Data management platforms
+    "bluekai.com", "bombora.com", "demandbase.com", "everesttech.net",
+    "krxd.net", "moatads.com", "narrative.io", "oracle.com/cx",
+    # Social tracking
+    "platform.twitter.com", "platform.linkedin.com", "connect.facebook.net",
+    "platform.instagram.com", "apis.google.com/js/platform",
+]
+
+# PII-collecting input field patterns
+PII_INPUT_PATTERNS = {
+    "name": ["name", "fullname", "full_name", "firstname", "lastname", "first_name", "last_name", "your-name"],
+    "email": ["email", "e-mail", "mail", "emailaddress", "email_address", "your-email"],
+    "phone": ["phone", "tel", "telephone", "mobile", "cell", "phonenumber", "phone_number"],
+    "address": ["address", "street", "city", "state", "zip", "zipcode", "postal", "country"],
+    "dob": ["dob", "birthday", "birthdate", "date_of_birth", "dateofbirth"],
+    "ssn": ["ssn", "social_security", "socialsecurity", "national_id", "nationalid"],
+    "card": ["card", "credit_card", "creditcard", "cardnumber", "card_number", "cvv", "cvc", "expiry"],
+    "password": ["password", "passwd", "pass", "secret"],
+    "aadhaar": ["aadhaar", "aadhar", "uid_number"],
+    "pan": ["pan_number", "pan_card", "pancard"],
+}
+
+
+class URLScanRequest(BaseModel):
+    url: str
+    email: Optional[str] = None
+
+
+@app.post("/api/v1/scan/url")
+async def scan_url(req: URLScanRequest):
+    """
+    Shadow AI / Website Privacy Scanner — Production-grade.
+    Dual-engine approach:
+      1. Jina Reader API (r.jina.ai) — free, cloud-hosted, handles JS/SPAs,
+         returns clean text from ANY website. No API key needed.
+      2. requests + BeautifulSoup — raw HTML analysis for trackers,
+         forms, scripts, pixels, compliance checks.
+    Then: Presidio NLP engine scans extracted text for PII.
+    Works identically on local, HuggingFace, Vercel, any cloud.
+    """
+    import requests as http_requests
+    from urllib.parse import urlparse
+    from bs4 import BeautifulSoup
+
+    url = req.url.strip()
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    parsed = urlparse(url)
+    base_domain = parsed.netloc.lower()
+
+    start_time = time.time()
+
+    # ---- ENGINE 1: Raw HTML fetch (for tracker/form/script analysis) ----
+    browser_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+    try:
+        resp = http_requests.get(url, headers=browser_headers, timeout=20, allow_redirects=True, verify=True)
+        html = resp.text
+        final_url = str(resp.url)
+        status_code = resp.status_code
+        is_https = final_url.startswith("https://")
+        response_headers = dict(resp.headers)
+    except http_requests.exceptions.SSLError:
+        try:
+            resp = http_requests.get(url, headers=browser_headers, timeout=20, allow_redirects=True, verify=False)
+            html = resp.text
+            final_url = str(resp.url)
+            status_code = resp.status_code
+            is_https = False
+            response_headers = dict(resp.headers)
+        except Exception as e:
+            raise HTTPException(400, f"Could not fetch URL: {str(e)}")
+    except Exception as e:
+        raise HTTPException(400, f"Could not fetch URL: {str(e)}")
+
+    if status_code >= 400:
+        raise HTTPException(400, f"URL returned HTTP {status_code}")
+
+    # ---- ENGINE 2: Jina Reader API (deep JS-rendered text extraction) ----
+    # Free, no API key, handles React/Vue/Angular/SPAs, returns clean text.
+    # Falls back to BS4 text extraction if Jina is unreachable.
+    jina_text = ""
+    jina_used = False
+    try:
+        jina_url = f"https://r.jina.ai/{url}"
+        jina_resp = http_requests.get(
+            jina_url,
+            headers={"Accept": "text/plain", "X-Return-Format": "text"},
+            timeout=30,
+        )
+        if jina_resp.ok and len(jina_resp.text) > 100:
+            jina_text = jina_resp.text
+            jina_used = True
+    except Exception:
+        pass  # Fallback to BS4
+
+    # ---- PARSE HTML ----
+    soup_full = BeautifulSoup(html, "html.parser")
+
+    # BS4 text extraction (fallback / supplement)
+    soup_text = BeautifulSoup(html, "html.parser")
+    for tag in soup_text(["script", "style", "noscript", "svg", "path"]):
+        tag.decompose()
+    bs4_text = soup_text.get_text(separator=" ", strip=True)
+
+    # Use Jina text (deeper, JS-rendered) when available, otherwise BS4
+    visible_text = jina_text if jina_used else bs4_text
+
+    
+    # ---- 3. DETECT TRACKERS ----
+    trackers_found = []
+    tracker_categories = {}
+    all_scripts = soup_full.find_all("script", src=True)
+    all_links = soup_full.find_all("link", href=True)
+    all_imgs = soup_full.find_all("img", src=True)
+    inline_scripts = soup_full.find_all("script", src=False)
+    inline_script_text = " ".join([s.string or "" for s in inline_scripts])
+    
+    # Check all external resources
+    all_src_urls = []
+    for s in all_scripts:
+        all_src_urls.append(s.get("src", ""))
+    for l in all_links:
+        all_src_urls.append(l.get("href", ""))
+    for img in all_imgs:
+        all_src_urls.append(img.get("src", ""))
+    
+    # Also check inline scripts
+    full_check_text = " ".join(all_src_urls) + " " + inline_script_text
+    
+    seen_trackers = set()
+    for signature, info in TRACKER_SIGNATURES.items():
+        if signature.lower() in full_check_text.lower():
+            if info["name"] not in seen_trackers:
+                seen_trackers.add(info["name"])
+                trackers_found.append({
+                    "name": info["name"],
+                    "category": info["category"],
+                    "risk": info["risk"],
+                    "signature": signature,
+                })
+                cat = info["category"]
+                tracker_categories[cat] = tracker_categories.get(cat, 0) + 1
+    
+    # ---- 4. DETECT TRACKING PIXELS (1x1 images) ----
+    tracking_pixels = []
+    for img in all_imgs:
+        src = img.get("src", "")
+        width = img.get("width", "")
+        height = img.get("height", "")
+        style = img.get("style", "")
+        is_pixel = False
+        if (width == "1" and height == "1") or (width == "0" and height == "0"):
+            is_pixel = True
+        if "display:none" in style or "visibility:hidden" in style:
+            is_pixel = True
+        if is_pixel and src:
+            tracking_pixels.append({"src": src[:200], "hidden": True})
+    
+    # ---- 5. DETECT DATA COLLECTION FORMS ----
+    forms_found = []
+    all_forms = soup_full.find_all("form")
+    all_inputs = soup_full.find_all("input")
+    
+    pii_inputs_found = []
+    for inp in all_inputs:
+        input_name = (inp.get("name", "") or "").lower()
+        input_type = (inp.get("type", "") or "").lower()
+        input_id = (inp.get("id", "") or "").lower()
+        input_placeholder = (inp.get("placeholder", "") or "").lower()
+        check_str = f"{input_name} {input_type} {input_id} {input_placeholder}"
+        
+        for pii_type, patterns in PII_INPUT_PATTERNS.items():
+            for pattern in patterns:
+                if pattern in check_str:
+                    pii_inputs_found.append({
+                        "type": pii_type,
+                        "field_name": input_name or input_id or input_placeholder[:40],
+                        "input_type": input_type,
+                    })
+                    break
+    
+    # Deduplicate
+    seen_inputs = set()
+    unique_pii_inputs = []
+    for inp in pii_inputs_found:
+        key = f"{inp['type']}:{inp['field_name']}"
+        if key not in seen_inputs:
+            seen_inputs.add(key)
+            unique_pii_inputs.append(inp)
+    
+    # ---- 6. DETECT AI/LLM ENDPOINTS ----
+    ai_endpoints_found = []
+    for pattern in AI_ENDPOINT_PATTERNS:
+        if pattern.lower() in full_check_text.lower():
+            # Determine if it's an API key leak vs endpoint reference
+            is_key_leak = pattern.startswith("sk-") or pattern.startswith("fw_")
+            ai_endpoints_found.append({
+                "pattern": pattern,
+                "type": "api_key_leak" if is_key_leak else "ai_endpoint",
+                "risk": "critical" if is_key_leak else "high",
+            })
+    
+    # ---- 7. BLACKLIGHT-GRADE: Canvas Fingerprinting Detection ----
+    canvas_fp_signals = []
+    for pattern in CANVAS_FINGERPRINT_PATTERNS:
+        if pattern in inline_script_text:
+            canvas_fp_signals.append(pattern)
+    canvas_fingerprinting = len(canvas_fp_signals) >= 2  # Need 2+ signals to confirm
+    
+    # ---- 8. BLACKLIGHT-GRADE: Key Logging Detection ----
+    keylog_signals = []
+    for pattern in KEYLOGGING_PATTERNS:
+        if pattern in inline_script_text or pattern in full_check_text:
+            keylog_signals.append(pattern)
+    key_logging_detected = len(keylog_signals) >= 2
+    
+    # ---- 9. BLACKLIGHT-GRADE: Session Recorder Deep Detection ----
+    session_rec_signals = []
+    for pattern in SESSION_RECORDER_PATTERNS:
+        if pattern.lower() in full_check_text.lower() or pattern.lower() in inline_script_text.lower():
+            session_rec_signals.append(pattern)
+    session_recording_detected = len(session_rec_signals) >= 2
+    
+    # ---- 10. BLACKLIGHT-GRADE: Facebook Pixel Events ----
+    fb_pixel_events = []
+    for pattern in FB_PIXEL_EVENTS:
+        if pattern in inline_script_text or pattern in full_check_text:
+            fb_pixel_events.append(pattern)
+    fb_pixel_detected = len(fb_pixel_events) > 0
+    
+    # ---- 11. BLACKLIGHT-GRADE: Google Analytics Events ----
+    ga_events = []
+    for pattern in GA_EVENT_PATTERNS:
+        if pattern in inline_script_text or pattern in full_check_text:
+            ga_events.append(pattern)
+    ga_detected = len(ga_events) > 0
+    
+    # ---- 12. Third-party tracking domains (Disconnect.me list) ----
+    third_party_domains_found = []
+    for domain in TRACKING_DOMAINS:
+        if domain.lower() in full_check_text.lower():
+            third_party_domains_found.append(domain)
+    
+    # ---- 13. COMPLIANCE CHECKS ----
+    page_lower = html.lower()
+    
+    has_privacy_policy = any(kw in page_lower for kw in [
+        "privacy policy", "privacy-policy", "privacypolicy",
+        "/privacy", "data protection", "datenschutz"
+    ])
+    
+    has_cookie_consent = any(kw in page_lower for kw in [
+        "cookie consent", "cookie-consent", "cookieconsent",
+        "cookie banner", "cookie-banner", "cookie policy",
+        "accept cookies", "cookie notice", "gdpr",
+        "cookie-law", "cookie_consent", "onetrust",
+        "cookiebot", "osano", "termly"
+    ])
+    
+    has_terms = any(kw in page_lower for kw in [
+        "terms of service", "terms-of-service", "terms and conditions",
+        "terms-and-conditions", "/terms", "/tos"
+    ])
+    
+    # Security headers — detailed analysis
+    security_headers = {
+        "content-security-policy": "Content-Security-Policy" in response_headers,
+        "x-frame-options": "X-Frame-Options" in response_headers,
+        "strict-transport-security": "Strict-Transport-Security" in response_headers,
+        "x-content-type-options": "X-Content-Type-Options" in response_headers,
+        "x-xss-protection": "X-XSS-Protection" in response_headers,
+        "referrer-policy": "Referrer-Policy" in response_headers,
+        "permissions-policy": "Permissions-Policy" in response_headers,
+    }
+    sec_header_score = sum(1 for v in security_headers.values() if v)
+    sec_header_grade = "A" if sec_header_score >= 6 else "B" if sec_header_score >= 4 else "C" if sec_header_score >= 2 else "F"
+    
+    # ---- 14. DEEP PRIVACY POLICY SCAN ----
+    # DPDP compliance signals are usually on /privacy or /terms pages, not the homepage.
+    # To avoid false negatives, we also fetch the privacy policy page.
+    privacy_page_text = ""
+    privacy_url_found = None
+    try:
+        # Find privacy policy link from homepage
+        for link in soup_full.find_all("a", href=True):
+            href = link.get("href", "").lower()
+            link_text = (link.get_text() or "").lower()
+            if any(kw in href for kw in ["/privacy", "privacy-policy", "privacypolicy", "data-protection"]) or \
+               any(kw in link_text for kw in ["privacy policy", "privacy notice", "data protection"]):
+                privacy_href = link.get("href", "")
+                # Resolve relative URLs
+                if privacy_href.startswith("/"):
+                    from urllib.parse import urlparse
+                    parsed = urlparse(final_url)
+                    privacy_url_found = f"{parsed.scheme}://{parsed.netloc}{privacy_href}"
+                elif privacy_href.startswith("http"):
+                    privacy_url_found = privacy_href
+                break
+        
+        # Fetch privacy policy page
+        if privacy_url_found:
+            pp_resp = http_requests.get(privacy_url_found, headers={"User-Agent": "Mozilla/5.0 RedactAI-Scanner/2.0"}, timeout=10)
+            if pp_resp.ok:
+                pp_soup = BeautifulSoup(pp_resp.text, "html.parser")
+                for tag in pp_soup(["script", "style", "noscript"]):
+                    tag.decompose()
+                privacy_page_text = pp_soup.get_text(separator=" ", strip=True).lower()
+    except Exception as e:
+        print(f"[!] Privacy policy page fetch failed: {e}")
+    
+    # Combine homepage + privacy page for DPDP analysis
+    combined_compliance_text = page_lower + " " + privacy_page_text
+    
+    # ---- 15. DPDP ACT 2023 (India) COMPLIANCE CHECKS ----
+    # Based on the Digital Personal Data Protection Act, 2023
+    # Now checks BOTH homepage AND privacy policy page for accuracy
+    dpdp_checks = {}
+    
+    # Consent mechanism — DPDP requires free, specific, informed, unconditional consent
+    dpdp_checks["consent_mechanism"] = any(kw in combined_compliance_text for kw in [
+        "i agree", "i consent", "accept cookies", "cookie consent",
+        "by continuing", "by using this", "consent to",
+        "opt-in", "opt in", "accept all", "reject all",
+        "manage preferences", "cookie preferences", "cookie settings",
+        "onetrust", "cookiebot", "osano", "termly", "truendo",
+        "consent management", "lawful basis", "legal basis",
+    ])
+    
+    # Privacy notice — DPDP Section 5: must inform purpose of data collection
+    dpdp_checks["privacy_notice"] = has_privacy_policy
+    
+    # Grievance officer / DPO contact — DPDP Section 8(7)
+    dpdp_checks["grievance_officer"] = any(kw in combined_compliance_text for kw in [
+        "grievance officer", "grievance redressal", "data protection officer",
+        "dpo@", "grievance@", "privacy@", "nodal officer",
+        "grievance.officer", "data-protection-officer",
+        "grievance mechanism", "redressal mechanism",
+    ])
+    
+    # Data retention / deletion policy — DPDP Section 8(6)
+    dpdp_checks["data_retention_policy"] = any(kw in combined_compliance_text for kw in [
+        "data retention", "retention policy", "data deletion",
+        "erase your data", "delete your data", "right to erasure",
+        "right to be forgotten", "data erasure", "retain your",
+        "retention period", "how long we keep", "how long we store",
+        "stored for a period", "deleted after", "erasure of data",
+    ])
+    
+    # Children's data protection — DPDP Section 9
+    dpdp_checks["children_protection"] = any(kw in combined_compliance_text for kw in [
+        "children", "child", "minor", "parental consent",
+        "under 18", "under 13", "coppa", "age verification",
+        "verifiable parental", "age gate", "minors",
+    ])
+    
+    # Consent withdrawal mechanism — DPDP Section 6(4)
+    dpdp_checks["consent_withdrawal"] = any(kw in combined_compliance_text for kw in [
+        "withdraw consent", "revoke consent", "opt out", "opt-out",
+        "unsubscribe", "manage consent", "withdraw your consent",
+        "right to withdraw", "change your preferences",
+        "modify your consent", "update your preferences",
+    ])
+    
+    # Data breach notification reference — DPDP Section 8(5)
+    dpdp_checks["breach_notification"] = any(kw in combined_compliance_text for kw in [
+        "data breach", "breach notification", "security incident",
+        "notify the board", "data protection board",
+        "security breach", "breach of data", "unauthorized access",
+        "incident response", "notify you of",
+    ])
+    
+    dpdp_score = sum(1 for v in dpdp_checks.values() if v)
+    dpdp_grade = "A" if dpdp_score >= 6 else "B" if dpdp_score >= 4 else "C" if dpdp_score >= 2 else "F"
+    
+    # ---- 15. COOKIE DEEP ANALYSIS (from Set-Cookie headers) ----
+    cookie_analysis = []
+    set_cookie_headers = response_headers.get("Set-Cookie", "") or response_headers.get("set-cookie", "")
+    if isinstance(set_cookie_headers, str):
+        set_cookie_headers = [set_cookie_headers] if set_cookie_headers else []
+    
+    for cookie_str in set_cookie_headers:
+        if not cookie_str.strip():
+            continue
+        parts = cookie_str.split(";")
+        name_val = parts[0].split("=", 1)
+        cookie_name = name_val[0].strip() if name_val else "unknown"
+        cookie_flags = cookie_str.lower()
+        
+        cookie_info = {
+            "name": cookie_name[:40],
+            "httponly": "httponly" in cookie_flags,
+            "secure": "secure" in cookie_flags,
+            "samesite": "samesite=strict" in cookie_flags or "samesite=lax" in cookie_flags,
+            "third_party": base_domain not in cookie_str.lower(),
+        }
+        # Duration analysis
+        if "max-age=" in cookie_flags:
+            try:
+                age = int(cookie_flags.split("max-age=")[1].split(";")[0].strip())
+                cookie_info["duration_days"] = round(age / 86400, 1)
+                cookie_info["persistent"] = age > 86400  # > 1 day
+            except:
+                cookie_info["persistent"] = True
+        elif "expires=" in cookie_flags:
+            cookie_info["persistent"] = True
+        else:
+            cookie_info["persistent"] = False  # Session cookie
+        
+        cookie_analysis.append(cookie_info)
+    
+    # ---- 16. PII SCAN ON PAGE TEXT (with false-positive filtering) ----
+    # Only flag ACTUAL personal data — not brand names, org names, etc.
+    # Organization names, locations, and dates are PUBLIC info, not PII exposure
+    REAL_PII_TYPES = {
+        "EMAIL_ADDRESS", "PHONE_NUMBER", "US_SSN", "CREDIT_CARD",
+        "US_DRIVER_LICENSE", "US_PASSPORT", "US_BANK_NUMBER",
+        "IBAN_CODE", "IP_ADDRESS", "MEDICAL_LICENSE",
+        "UK_NHS", "SG_NRIC_FIN", "AU_ABN", "AU_ACN",
+    }
+    
+    pii_in_text = []
+    text_preview = visible_text[:5000]
+    if text_preview.strip() and analyzer:
+        try:
+            results = analyzer.analyze(
+                text=text_preview,
+                language="en",
+                score_threshold=0.7,  # Higher threshold to reduce false positives
+            )
+            for r in results:
+                # Only flag REAL PII types — skip ORGANIZATION, LOCATION, DATE, PERSON
+                # Those are public information on a website, not PII exposure
+                if r.entity_type not in REAL_PII_TYPES:
+                    continue
+                entity_text = text_preview[r.start:r.end].strip()
+                if len(entity_text) > 3:
+                    pii_in_text.append({
+                        "type": r.entity_type,
+                        "text": entity_text[:50],
+                        "score": round(r.score, 2),
+                        "label": ENTITY_META.get(r.entity_type, {}).get("label", r.entity_type),
+                    })
+            # Deduplicate by text value
+            seen_pii = set()
+            unique_pii = []
+            for p in pii_in_text:
+                if p["text"] not in seen_pii:
+                    seen_pii.add(p["text"])
+                    unique_pii.append(p)
+            pii_in_text = unique_pii[:20]
+        except Exception as e:
+            print(f"[!] PII scan on URL content failed: {e}")
+    
+    # ---- 9. CALCULATE RISK SCORE ----
+    risk_score = 0
+    risk_factors = []
+    
+    if not is_https:
+        risk_score += 25
+        risk_factors.append("No HTTPS — data transmitted in plain text")
+    if len(trackers_found) > 5:
+        risk_score += 20
+        risk_factors.append(f"{len(trackers_found)} third-party trackers detected")
+    elif len(trackers_found) > 0:
+        risk_score += 10
+        risk_factors.append(f"{len(trackers_found)} third-party tracker(s) found")
+    if tracker_categories.get("session_recording", 0) > 0:
+        risk_score += 15
+        risk_factors.append("Session recording detected — keystrokes/mouse may be captured")
+    if tracker_categories.get("fingerprinting", 0) > 0:
+        risk_score += 15
+        risk_factors.append("Browser fingerprinting detected")
+    if len(tracking_pixels) > 0:
+        risk_score += 10
+        risk_factors.append(f"{len(tracking_pixels)} hidden tracking pixel(s)")
+    if len(ai_endpoints_found) > 0:
+        key_leaks = [a for a in ai_endpoints_found if a["type"] == "api_key_leak"]
+        if key_leaks:
+            risk_score += 25
+            risk_factors.append(f"Exposed AI API key(s) in client-side code!")
+        else:
+            risk_score += 5
+            risk_factors.append("AI/LLM API endpoints referenced in client code")
+    if len(pii_in_text) > 0:
+        risk_score += 15
+        risk_factors.append(f"{len(pii_in_text)} PII item(s) exposed in page content")
+    if not has_privacy_policy:
+        risk_score += 10
+        risk_factors.append("No privacy policy link found")
+    if not has_cookie_consent and len(trackers_found) > 0:
+        risk_score += 10
+        risk_factors.append("Trackers present but no cookie consent mechanism")
+    if len(unique_pii_inputs) > 3:
+        risk_score += 5
+        risk_factors.append(f"Collects {len(unique_pii_inputs)} types of personal data via forms")
+    
+    # Blacklight-grade risk factors
+    if canvas_fingerprinting:
+        risk_score += 15
+        risk_factors.append(f"Canvas fingerprinting detected ({len(canvas_fp_signals)} API signals)")
+    if key_logging_detected:
+        risk_score += 20
+        risk_factors.append(f"Key logging detected — keystrokes captured before form submission")
+    if session_recording_detected:
+        risk_score += 15
+        risk_factors.append(f"Session recording — mouse movements/clicks/scrolls being captured")
+    if fb_pixel_detected:
+        risk_score += 10
+        risk_factors.append(f"Facebook Pixel tracking {len(fb_pixel_events)} event type(s)")
+    if ga_detected and "user_id" in ga_events:
+        risk_score += 10
+        risk_factors.append("Google Analytics with user-level tracking (user_id)")
+    elif ga_detected:
+        risk_score += 5
+        risk_factors.append(f"Google Analytics tracking {len(ga_events)} event type(s)")
+    if len(third_party_domains_found) > 5:
+        risk_score += 10
+        risk_factors.append(f"{len(third_party_domains_found)} known ad/tracking domains from Disconnect.me list")
+    elif len(third_party_domains_found) > 0:
+        risk_score += 5
+        risk_factors.append(f"{len(third_party_domains_found)} known ad/tracking domain(s)")
+    
+    risk_score = min(risk_score, 100)
+    
+    if risk_score >= 70:
+        risk_level = "critical"
+    elif risk_score >= 40:
+        risk_level = "high"
+    elif risk_score >= 20:
+        risk_level = "medium"
+    else:
+        risk_level = "low"
+    
+    elapsed = round((time.time() - start_time) * 1000, 1)
+    
+    # ---- BUILD REPORT ----
+    report = {
+        "url": final_url,
+        "domain": base_domain,
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+        "scan_time_ms": elapsed,
+        "status_code": status_code,
+        
+        # Risk assessment
+        "risk_score": risk_score,
+        "risk_level": risk_level,
+        "risk_factors": risk_factors,
+        
+        # Findings
+        "trackers": {
+            "count": len(trackers_found),
+            "items": trackers_found,
+            "categories": tracker_categories,
+        },
+        "tracking_pixels": {
+            "count": len(tracking_pixels),
+            "items": tracking_pixels[:10],
+        },
+        "pii_collection": {
+            "form_count": len(all_forms),
+            "pii_input_count": len(unique_pii_inputs),
+            "inputs": unique_pii_inputs,
+        },
+        "exposed_pii": {
+            "count": len(pii_in_text),
+            "items": pii_in_text,
+        },
+        "ai_endpoints": {
+            "count": len(ai_endpoints_found),
+            "items": ai_endpoints_found,
+        },
+        
+        # Blacklight-grade deep analysis
+        "blacklight": {
+            "canvas_fingerprinting": {
+                "detected": canvas_fingerprinting,
+                "signals": canvas_fp_signals[:10],
+                "signal_count": len(canvas_fp_signals),
+            },
+            "key_logging": {
+                "detected": key_logging_detected,
+                "signals": keylog_signals[:10],
+                "signal_count": len(keylog_signals),
+            },
+            "session_recording": {
+                "detected": session_recording_detected,
+                "signals": session_rec_signals[:10],
+                "signal_count": len(session_rec_signals),
+            },
+            "facebook_pixel": {
+                "detected": fb_pixel_detected,
+                "events": fb_pixel_events[:10],
+            },
+            "google_analytics": {
+                "detected": ga_detected,
+                "events": ga_events[:10],
+                "user_tracking": "user_id" in ga_events,
+            },
+            "tracking_domains": {
+                "count": len(third_party_domains_found),
+                "domains": third_party_domains_found[:20],
+            },
+        },
+        
+        # Compliance
+        "compliance": {
+            "https": is_https,
+            "privacy_policy": has_privacy_policy,
+            "cookie_consent": has_cookie_consent,
+            "terms_of_service": has_terms,
+            "security_headers": security_headers,
+            "security_header_grade": sec_header_grade,
+        },
+        
+        # DPDP Act 2023 (India) Compliance
+        "dpdp": {
+            "score": dpdp_score,
+            "grade": dpdp_grade,
+            "total_checks": len(dpdp_checks),
+            "checks": {k: {"passed": v, "section": {
+                "consent_mechanism": "Section 6 — Consent",
+                "privacy_notice": "Section 5 — Notice",
+                "grievance_officer": "Section 8(7) — Grievance Redressal",
+                "data_retention_policy": "Section 8(6) — Data Retention",
+                "children_protection": "Section 9 — Children's Data",
+                "consent_withdrawal": "Section 6(4) — Consent Withdrawal",
+                "breach_notification": "Section 8(5) — Breach Notification",
+            }.get(k, "")} for k, v in dpdp_checks.items()},
+        },
+        
+        # Page info
+        "page": {
+            "title": (soup_full.title.string.strip() if soup_full.title and soup_full.title.string else ""),
+            "text_length": len(visible_text),
+            "scripts_count": len(all_scripts),
+            "forms_count": len(all_forms),
+            "images_count": len(all_imgs),
+        },
+        
+        # Scan engine info
+        "engine": {
+            "text_extraction": "Jina Reader API (JS-rendered)" if jina_used else "BeautifulSoup (static HTML)",
+            "html_analysis": "requests + BeautifulSoup",
+            "pii_detection": "Microsoft Presidio NLP" if analyzer else "unavailable",
+            "methodology": "Blacklight (The Markup) + DPDP Act 2023 + Presidio + Jina Reader",
+        },
+        
+        # Cookie deep analysis
+        "cookies": {
+            "count": len(cookie_analysis),
+            "items": cookie_analysis[:20],
+            "summary": {
+                "session_cookies": sum(1 for c in cookie_analysis if not c.get("persistent")),
+                "persistent_cookies": sum(1 for c in cookie_analysis if c.get("persistent")),
+                "httponly": sum(1 for c in cookie_analysis if c.get("httponly")),
+                "secure": sum(1 for c in cookie_analysis if c.get("secure")),
+                "samesite": sum(1 for c in cookie_analysis if c.get("samesite")),
+                "third_party": sum(1 for c in cookie_analysis if c.get("third_party")),
+            },
+        },
+    }
+    
+    return report
 
 
 # ---- Serve Frontend Static Files ----

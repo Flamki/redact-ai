@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Privacy Scanner — RedactAI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 0.4), transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    .back-link {
+      position: fixed; top: 24px; left: 24px;
+      color: #9ca3af; text-decoration: none; font-size: 14px;
+      display: flex; align-items: center; gap: 8px;
+      transition: color 0.2s; z-index: 100;
+    }
+    .back-link:hover { color: #ffffff; }
+
+    /* ---- STEP 1: INPUT ---- */
+    .scan-step { padding: 20vh 0 40px; text-align: center; }
+    .scan-step.hidden { display: none; }
+
+    .scan-title { font-size: 32px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .scan-subtitle { font-size: 15px; color: #9ca3af; margin-bottom: 40px; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+    .input-wrapper {
+      position: relative; width: 100%; max-width: 680px; margin: 0 auto;
+      background: #1e1e24; border-radius: 40px;
+      display: flex; align-items: center;
+      padding: 6px 6px 6px 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .input-wrapper:focus-within {
+      background: #232329; border-color: rgba(108,92,231,0.5);
+      box-shadow: 0 0 0 4px rgba(108,92,231,0.1), 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .input-field {
+      flex: 1; background: transparent; border: none;
+      color: #fff; font-size: 16px; font-family: inherit; outline: none; padding: 14px 0;
+    }
+    .input-field::placeholder { color: #6b7280; }
+
+    .input-btn {
+      background: #fff; color: #000; border: none;
+      height: 44px; padding: 0 24px; border-radius: 22px;
+      font-weight: 600; font-size: 14px; font-family: inherit;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-left: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .input-btn:hover { background: #e5e7eb; transform: scale(1.02); }
+    .input-btn:disabled { background: #374151; color: #9ca3af; cursor: not-allowed; transform: none; }
+
+    .tags-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-top: 24px; flex-wrap: wrap;
+    }
+    .tag {
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      color: #d1d5db; padding: 8px 16px; border-radius: 20px;
+      font-size: 13px; font-weight: 500;
+    }
+
+    /* ---- SCANNING STATE ---- */
+    .scanning-state { padding: 25vh 0; text-align: center; }
+    .scanning-state.hidden { display: none; }
+
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .scan-log { max-width: 500px; margin: 24px auto 0; text-align: left; }
+    .scan-log-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0; font-size: 14px; color: #9ca3af;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    .scan-log-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #32d74b; flex-shrink: 0; }
+    .scan-log-item.pending .dot { background: #ffd60a; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ---- RESULTS ---- */
+    .results { padding: 80px 0 60px; }
+    .results.hidden { display: none; }
+
+    .results-header { text-align: center; margin-bottom: 48px; }
+    .results-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .results-header .scanned-url { font-size: 14px; color: #9ca3af; word-break: break-all; }
+
+    /* Risk gauge */
+    .risk-gauge { text-align: center; margin-bottom: 48px; }
+    .risk-circle {
+      width: 160px; height: 160px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      border: 4px solid; position: relative;
+    }
+    .risk-circle.low { border-color: #32d74b; }
+    .risk-circle.medium { border-color: #ffd60a; }
+    .risk-circle.high { border-color: #ff9500; }
+    .risk-circle.critical { border-color: #ff453a; }
+    .risk-score { font-size: 48px; font-weight: 800; line-height: 1; }
+    .risk-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-top: 4px; }
+    .risk-level-text { font-size: 18px; font-weight: 600; }
+    .risk-level-text.low { color: #32d74b; }
+    .risk-level-text.medium { color: #ffd60a; }
+    .risk-level-text.high { color: #ff9500; }
+    .risk-level-text.critical { color: #ff453a; }
+
+    /* Risk factors */
+    .risk-factors { max-width: 600px; margin: 24px auto; }
+    .risk-factor {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; font-size: 14px; color: #d1d5db;
+    }
+    .risk-factor::before { content: '⚠'; flex-shrink: 0; }
+
+    /* Section cards */
+    .report-section {
+      background: rgba(20,20,28,0.8); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 24px; margin-bottom: 20px;
+      backdrop-filter: blur(8px);
+    }
+    .report-section h3 {
+      font-size: 16px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .report-section h3 .count {
+      background: rgba(255,255,255,0.08); padding: 2px 10px;
+      border-radius: 12px; font-size: 13px; font-weight: 500; color: #9ca3af;
+    }
+
+    /* Tracker items */
+    .tracker-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 14px;
+    }
+    .tracker-item:last-child { border-bottom: none; }
+    .tracker-name { font-weight: 500; }
+    .tracker-meta { display: flex; align-items: center; gap: 8px; }
+    .tracker-badge {
+      padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    }
+    .tracker-badge.analytics { background: rgba(10,132,255,0.15); color: #0a84ff; }
+    .tracker-badge.advertising { background: rgba(255,69,58,0.15); color: #ff453a; }
+    .tracker-badge.session_recording { background: rgba(255,149,0,0.15); color: #ff9500; }
+    .tracker-badge.cdp { background: rgba(50,215,75,0.15); color: #32d74b; }
+    .tracker-badge.fingerprinting { background: rgba(175,82,222,0.15); color: #af52de; }
+
+    .risk-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .risk-dot.low { background: #32d74b; }
+    .risk-dot.medium { background: #ffd60a; }
+    .risk-dot.high { background: #ff453a; }
+
+    /* Compliance checks */
+    .compliance-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 14px;
+    }
+    .compliance-row:last-child { border-bottom: none; }
+    .check-pass { color: #32d74b; }
+    .check-fail { color: #ff453a; }
+
+    /* PII items */
+    .pii-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px; font-size: 13px;
+      background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.2);
+      color: #fca5a5; margin: 0 6px 6px 0;
+    }
+
+    /* CTA */
+    .report-cta {
+      text-align: center; margin-top: 40px; padding: 32px;
+      background: rgba(108,92,231,0.08); border: 1px solid rgba(108,92,231,0.2);
+      border-radius: 16px;
+    }
+    .report-cta h3 { font-size: 18px; margin-bottom: 8px; justify-content: center; }
+    .report-cta p { font-size: 14px; color: #9ca3af; margin-bottom: 20px; }
+    .btn-primary {
+      background: #fff; color: #000; border: none; padding: 12px 28px;
+      border-radius: 8px; font-weight: 600; font-size: 14px; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #e5e7eb; }
+
+    .empty-state { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+
+    /* Animations */
+    .fade-up { animation: fadeUp 0.5s ease forwards; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- Blacklight Deep Analysis Styles ---- */
+    .bl-test {
+      padding: 14px 18px; border-radius: 10px; margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.2s;
+    }
+    .bl-test:hover { border-color: rgba(255,255,255,0.12); }
+    .bl-pass { background: rgba(50,215,75,0.06); border-color: rgba(50,215,75,0.15); }
+    .bl-fail { background: rgba(255,69,58,0.08); border-color: rgba(255,69,58,0.2); }
+    .bl-warn { background: rgba(255,214,10,0.06); border-color: rgba(255,214,10,0.15); }
+    .bl-test-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 14px; font-weight: 500;
+    }
+    .bl-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .bl-pass .bl-badge { background: rgba(50,215,75,0.15); color: #86efac; }
+    .bl-fail .bl-badge { background: rgba(255,69,58,0.2); color: #fca5a5; }
+    .bl-warn .bl-badge { background: rgba(255,214,10,0.15); color: #fde68a; }
+    .bl-detail {
+      margin-top: 8px; font-size: 12px; color: #9ca3af;
+      line-height: 1.6; word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back-link">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    Back to Home
+  </a>
+
+  <!-- STEP 1: URL Input -->
+  <div class="scan-step" id="step-input">
+    <div class="container">
+      <h1 class="scan-title">Website Privacy Scanner</h1>
+      <p class="scan-subtitle">
+        Enter any URL to discover exposed PII, tracking scripts, shadow AI endpoints, 
+        and compliance gaps — powered by our Presidio engine. Real results, not fake.
+      </p>
+      <div class="input-wrapper">
+        <svg style="margin-right:12px;color:#6b7280;flex-shrink:0;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <input type="url" id="urlInput" class="input-field" placeholder="https://example.com" autocomplete="off" />
+        <button class="input-btn" id="btnScan" onclick="startScan()">
+          Scan Website →
+        </button>
+      </div>
+      <div class="tags-row">
+        <div class="tag">🔒 Zero data stored</div>
+        <div class="tag">⚡ Takes ~10 seconds</div>
+        <div class="tag">🔍 Public pages only</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Scanning -->
+  <div class="scanning-state hidden" id="step-scanning">
+    <div class="container">
+      <div class="spinner"></div>
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:4px;" id="scan-status-text">Scanning...</h2>
+      <p style="font-size:14px;color:#9ca3af;" id="scan-url-display"></p>
+      <div class="scan-log" id="scan-log"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Results -->
+  <div class="results hidden" id="step-results">
+    <div class="container">
+      <div class="results-header fade-up">
+        <h1>Privacy Scan Report</h1>
+        <div class="scanned-url" id="result-url"></div>
+      </div>
+
+      <!-- Risk Score -->
+      <div class="risk-gauge fade-up" id="risk-gauge"></div>
+
+      <!-- Risk Factors -->
+      <div class="risk-factors" id="risk-factors"></div>
+
+      <!-- Trackers -->
+      <div class="report-section fade-up" id="section-trackers"></div>
+
+      <!-- PII Collection -->
+      <div class="report-section fade-up" id="section-pii-collection"></div>
+
+      <!-- Exposed PII -->
+      <div class="report-section fade-up" id="section-exposed-pii"></div>
+
+      <!-- AI Endpoints -->
+      <div class="report-section fade-up" id="section-ai"></div>
+
+      <!-- Blacklight Deep Analysis -->
+      <div class="report-section fade-up" id="section-blacklight"></div>
+
+      <!-- Compliance -->
+      <div class="report-section fade-up" id="section-compliance"></div>
+
+      <!-- CTA -->
+      <div class="report-cta fade-up">
+        <h3>Want ongoing monitoring?</h3>
+        <p>Get automated weekly scans, team dashboards, and compliance reports with RedactAI Pro.</p>
+        <a href="dashboard.html"><button class="btn-primary">Go to Dashboard →</button></a>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = window.location.origin + '/api/v1';
+
+// Allow Enter key
+document.getElementById('urlInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); startScan(); }
+});
+
+async function startScan() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { document.getElementById('urlInput').focus(); return; }
+
+  // Switch to scanning state
+  document.getElementById('step-input').classList.add('hidden');
+  document.getElementById('step-scanning').classList.remove('hidden');
+  document.getElementById('step-results').classList.add('hidden');
+  document.getElementById('scan-url-display').textContent = url;
+
+  // Animate scan log
+  const log = document.getElementById('scan-log');
+  log.innerHTML = '';
+  const steps = [
+    'Fetching page via dual-engine (requests + Jina Reader)...',
+    'Parsing HTML structure with BeautifulSoup...',
+    'Scanning for third-party trackers (40+ signatures)...',
+    'Detecting hidden tracking pixels...',
+    'Analyzing data collection forms for PII fields...',
+    'Searching for AI/LLM endpoints & leaked API keys...',
+    '[Blacklight] Detecting canvas fingerprinting...',
+    '[Blacklight] Scanning for key logging scripts...',
+    '[Blacklight] Checking session recording tools...',
+    '[Blacklight] Analyzing Facebook Pixel events...',
+    '[Blacklight] Scanning Google Analytics tracking...',
+    '[Blacklight] Checking Disconnect.me tracking domains...',
+    'Running PII detection (Microsoft Presidio NLP)...',
+    'Checking GDPR/DPDP compliance posture...',
+    'Calculating risk score...',
+  ];
+
+  let stepIdx = 0;
+  const logInterval = setInterval(() => {
+    if (stepIdx < steps.length) {
+      const item = document.createElement('div');
+      item.className = 'scan-log-item';
+      item.innerHTML = '<span class="dot"></span>' + steps[stepIdx];
+      log.appendChild(item);
+      stepIdx++;
+    }
+  }, 800);
+
+  // Call the real API
+  try {
+    const res = await fetch(API_BASE + '/scan/url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url })
+    });
+
+    clearInterval(logInterval);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(err.detail || 'Scan failed');
+    }
+
+    const report = await res.json();
+    
+    // Final log item
+    const done = document.createElement('div');
+    done.className = 'scan-log-item';
+    done.innerHTML = '<span class="dot" style="background:#32d74b"></span>Scan complete! Generating report...';
+    log.appendChild(done);
+
+    // Short delay for UX then show results
+    await new Promise(r => setTimeout(r, 1000));
+    renderReport(report);
+
+  } catch (err) {
+    clearInterval(logInterval);
+    document.getElementById('scan-status-text').textContent = 'Scan Failed';
+    const errItem = document.createElement('div');
+    errItem.className = 'scan-log-item';
+    errItem.innerHTML = '<span class="dot" style="background:#ff453a"></span>' + err.message;
+    log.appendChild(errItem);
+
+    // Add retry button
+    const retry = document.createElement('button');
+    retry.className = 'input-btn';
+    retry.style.cssText = 'margin:24px auto 0;display:block;';
+    retry.textContent = '← Try Again';
+    retry.onclick = () => {
+      document.getElementById('step-scanning').classList.add('hidden');
+      document.getElementById('step-input').classList.remove('hidden');
+    };
+    log.appendChild(retry);
+  }
+}
+
+function renderReport(r) {
+  document.getElementById('step-scanning').classList.add('hidden');
+  document.getElementById('step-results').classList.remove('hidden');
+
+  // URL
+  document.getElementById('result-url').textContent = r.url + ' · Scanned in ' + (r.scan_time_ms / 1000).toFixed(1) + 's';
+
+  // Risk gauge
+  const rg = document.getElementById('risk-gauge');
+  rg.innerHTML = `
+    <div class="risk-circle ${r.risk_level}">
+      <div class="risk-score">${r.risk_score}</div>
+      <div class="risk-label">/ 100</div>
+    </div>
+    <div class="risk-level-text ${r.risk_level}">${r.risk_level.toUpperCase()} RISK</div>
+  `;
+
+  // Risk factors
+  const rf = document.getElementById('risk-factors');
+  if (r.risk_factors.length > 0) {
+    rf.innerHTML = r.risk_factors.map(f => '<div class="risk-factor">' + f + '</div>').join('');
+  } else {
+    rf.innerHTML = '<div class="risk-factor" style="color:#32d74b;">No significant risks detected!</div>';
+  }
+
+  // Trackers
+  const ts = document.getElementById('section-trackers');
+  ts.innerHTML = '<h3>🕵️ Third-Party Trackers <span class="count">' + r.trackers.count + ' found</span></h3>';
+  if (r.trackers.items.length > 0) {
+    ts.innerHTML += r.trackers.items.map(t => `
+      <div class="tracker-item">
+        <span class="tracker-name">${t.name}</span>
+        <div class="tracker-meta">
+          <span class="tracker-badge ${t.category}">${t.category.replace('_', ' ')}</span>
+          <span class="risk-dot ${t.risk}"></span>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    ts.innerHTML += '<div class="empty-state">No third-party trackers detected ✓</div>';
+  }
+
+  // PII Collection
+  const pc = document.getElementById('section-pii-collection');
+  pc.innerHTML = '<h3>📝 Data Collection Forms <span class="count">' + r.pii_collection.pii_input_count + ' PII fields</span></h3>';
+  if (r.pii_collection.inputs.length > 0) {
+    pc.innerHTML += '<div style="margin-bottom:12px;font-size:13px;color:#9ca3af;">This site collects the following personal data via forms:</div>';
+    pc.innerHTML += r.pii_collection.inputs.map(inp => 
+      '<div class="pii-item">' + inp.type.toUpperCase() + ' (' + (inp.field_name || 'unnamed') + ')</div>'
+    ).join('');
+  } else {
+    pc.innerHTML += '<div class="empty-state">No PII-collecting form fields detected ✓</div>';
+  }
+
+  // Exposed PII
+  const ep = document.getElementById('section-exposed-pii');
+  ep.innerHTML = '<h3>🚨 Exposed PII in Page Content <span class="count">' + r.exposed_pii.count + ' items</span></h3>';
+  if (r.exposed_pii.items.length > 0) {
+    ep.innerHTML += '<div style="margin-bottom:12px;font-size:13px;color:#9ca3af;">Personal data found visible in the page HTML:</div>';
+    ep.innerHTML += r.exposed_pii.items.map(p =>
+      '<div class="pii-item">' + p.label + ': "' + p.text + '" <span style="opacity:0.6">(' + (p.score * 100).toFixed(0) + '%)</span></div>'
+    ).join('');
+  } else {
+    ep.innerHTML += '<div class="empty-state">No exposed PII found in page content ✓</div>';
+  }
+
+  // AI Endpoints
+  const ai = document.getElementById('section-ai');
+  ai.innerHTML = '<h3>🤖 AI / LLM Endpoints <span class="count">' + r.ai_endpoints.count + ' found</span></h3>';
+  if (r.ai_endpoints.items.length > 0) {
+    ai.innerHTML += r.ai_endpoints.items.map(a => `
+      <div class="tracker-item">
+        <span class="tracker-name">${a.pattern}</span>
+        <div class="tracker-meta">
+          <span class="tracker-badge ${a.risk === 'critical' ? 'advertising' : 'analytics'}">${a.type.replace('_', ' ')}</span>
+          <span class="risk-dot ${a.risk === 'critical' ? 'high' : 'medium'}"></span>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    ai.innerHTML += '<div class="empty-state">No AI/LLM API endpoints detected ✓</div>';
+  }
+
+  // ---- BLACKLIGHT DEEP ANALYSIS ----
+  const bl = document.getElementById('section-blacklight');
+  if (r.blacklight) {
+    const b = r.blacklight;
+    let blHtml = '<h3>🔬 Blacklight Deep Analysis</h3>';
+    blHtml += '<div style="font-size:12px;color:#6b7280;margin-bottom:16px;">Methodology: <a href="https://themarkup.org/blacklight/2020/09/22/how-we-built-a-real-time-privacy-inspector" target="_blank" style="color:#818cf8">The Markup\'s Blacklight</a></div>';
+
+    // Canvas Fingerprinting
+    blHtml += `<div class="bl-test ${b.canvas_fingerprinting.detected ? 'bl-fail' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.canvas_fingerprinting.detected ? '🔴' : '🟢'} Canvas Fingerprinting</span>
+        <span class="bl-badge">${b.canvas_fingerprinting.detected ? 'DETECTED' : 'Not Found'}</span>
+      </div>
+      ${b.canvas_fingerprinting.detected ? '<div class="bl-detail">Signals: ' + b.canvas_fingerprinting.signals.join(', ') + '</div>' : ''}
+    </div>`;
+
+    // Key Logging
+    blHtml += `<div class="bl-test ${b.key_logging.detected ? 'bl-fail' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.key_logging.detected ? '🔴' : '🟢'} Key Logging</span>
+        <span class="bl-badge">${b.key_logging.detected ? 'DETECTED' : 'Not Found'}</span>
+      </div>
+      ${b.key_logging.detected ? '<div class="bl-detail">Captures keystrokes before form submission. Signals: ' + b.key_logging.signals.slice(0,5).join(', ') + '</div>' : ''}
+    </div>`;
+
+    // Session Recording
+    blHtml += `<div class="bl-test ${b.session_recording.detected ? 'bl-fail' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.session_recording.detected ? '🔴' : '🟢'} Session Recording</span>
+        <span class="bl-badge">${b.session_recording.detected ? 'DETECTED' : 'Not Found'}</span>
+      </div>
+      ${b.session_recording.detected ? '<div class="bl-detail">Mouse/scroll/click recording active. Signals: ' + b.session_recording.signals.slice(0,5).join(', ') + '</div>' : ''}
+    </div>`;
+
+    // Facebook Pixel
+    blHtml += `<div class="bl-test ${b.facebook_pixel.detected ? 'bl-fail' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.facebook_pixel.detected ? '🟡' : '🟢'} Facebook Pixel Events</span>
+        <span class="bl-badge">${b.facebook_pixel.detected ? b.facebook_pixel.events.length + ' events' : 'Not Found'}</span>
+      </div>
+      ${b.facebook_pixel.detected ? '<div class="bl-detail">Events: ' + b.facebook_pixel.events.join(', ') + '</div>' : ''}
+    </div>`;
+
+    // Google Analytics
+    blHtml += `<div class="bl-test ${b.google_analytics.user_tracking ? 'bl-fail' : b.google_analytics.detected ? 'bl-warn' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.google_analytics.user_tracking ? '🔴' : b.google_analytics.detected ? '🟡' : '🟢'} Google Analytics</span>
+        <span class="bl-badge">${b.google_analytics.user_tracking ? 'USER TRACKING' : b.google_analytics.detected ? b.google_analytics.events.length + ' events' : 'Not Found'}</span>
+      </div>
+      ${b.google_analytics.detected ? '<div class="bl-detail">Events: ' + b.google_analytics.events.join(', ') + '</div>' : ''}
+    </div>`;
+
+    // Tracking Domains
+    blHtml += `<div class="bl-test ${b.tracking_domains.count > 5 ? 'bl-fail' : b.tracking_domains.count > 0 ? 'bl-warn' : 'bl-pass'}">
+      <div class="bl-test-header">
+        <span>${b.tracking_domains.count > 5 ? '🔴' : b.tracking_domains.count > 0 ? '🟡' : '🟢'} Ad/Tracking Domains (Disconnect.me)</span>
+        <span class="bl-badge">${b.tracking_domains.count} found</span>
+      </div>
+      ${b.tracking_domains.count > 0 ? '<div class="bl-detail">' + b.tracking_domains.domains.join(', ') + '</div>' : ''}
+    </div>`;
+
+    bl.innerHTML = blHtml;
+  }
+
+  // Compliance
+  const cc = document.getElementById('section-compliance');
+  const c = r.compliance;
+  cc.innerHTML = '<h3>📋 Compliance Checklist</h3>';
+  const checks = [
+    ['HTTPS Encryption', c.https],
+    ['Privacy Policy', c.privacy_policy],
+    ['Cookie Consent', c.cookie_consent],
+    ['Terms of Service', c.terms_of_service],
+    ['Content-Security-Policy', c.security_headers?.['content-security-policy']],
+    ['X-Frame-Options', c.security_headers?.['x-frame-options']],
+    ['Strict-Transport-Security', c.security_headers?.['strict-transport-security']],
+  ];
+  cc.innerHTML += checks.map(([name, pass]) => `
+    <div class="compliance-row">
+      <span>${name}</span>
+      <span class="${pass ? 'check-pass' : 'check-fail'}">${pass ? '✓ Pass' : '✗ Fail'}</span>
+    </div>
+  `).join('');
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Auto-start if URL is passed via query param (from index.html redirect)
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const autoUrl = params.get('url');
+  if (autoUrl) {
+    document.getElementById('urlInput').value = autoUrl;
+    setTimeout(() => startScan(), 300);
+  }
+})();
+</script>
+</body>
+</html>

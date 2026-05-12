@@ -373,9 +373,23 @@ function init() {
     }
     navigator.clipboard.writeText(redactedText).then(() => {
       const btn = document.getElementById('btn-copy');
-      const orig = btn.textContent;
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => btn.textContent = orig, 2000);
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ Copied!';
+      
+      // Fun Confetti Popper Effect
+      if (typeof confetti === 'function') {
+        const rect = btn.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          origin: { x, y },
+          colors: ['#0ea5e9', '#8b5cf6', '#f43f5e']
+        });
+      }
+
+      setTimeout(() => btn.innerHTML = orig, 2000);
     });
   });
 

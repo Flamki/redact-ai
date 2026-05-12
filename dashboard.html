@@ -1,51 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RedactAI — Dashboard</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="dashboard.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'><i data-lucide="
+    shield-check"></i></text></svg>">
 </head>
+
 <body>
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar__header">
       <a href="index.html" class="navbar__logo">
-        <div class="navbar__logo-icon">R</div>
+        <svg class="logo-svg" viewBox="0 0 48 48" width="36" height="36" xmlns="http://www.w3.org/2000/svg"
+          style="margin-right:8px;">
+          <g fill="#555555" class="logo-bars">
+            <rect x="10" y="12" width="4" height="24" rx="2" />
+            <rect x="18" y="6" width="4" height="36" rx="2" />
+            <rect x="26" y="14" width="4" height="20" rx="2" />
+            <rect x="34" y="10" width="4" height="28" rx="2" />
+          </g>
+          <rect class="logo-redaction" x="8" y="20" width="32" height="8" rx="2" fill="#ffffff" />
+        </svg>
         <div class="navbar__logo-text">Redact<span>AI</span></div>
       </a>
     </div>
     <nav class="sidebar__nav">
       <button class="sidebar__link active" data-page="overview" id="nav-overview" onclick="switchPage('overview')">
-        <span class="sidebar__icon">📊</span> Overview
+        <span class="sidebar__icon"><i data-lucide="bar-chart-2"></i></span> <span class="sidebar__link-text">Overview</span>
       </button>
       <button class="sidebar__link" data-page="scanner" id="nav-scanner" onclick="switchPage('scanner')">
-        <span class="sidebar__icon">🛡️</span> Scanner
+        <span class="sidebar__icon"><i data-lucide="shield-check"></i></span> <span class="sidebar__link-text">Scanner</span>
       </button>
       <button class="sidebar__link" data-page="files" id="nav-files" onclick="switchPage('files')">
-        <span class="sidebar__icon">📁</span> File Upload
+        <span class="sidebar__icon"><i data-lucide="folder"></i></span> <span class="sidebar__link-text">File Upload</span>
       </button>
       <button class="sidebar__link" data-page="history" id="nav-history" onclick="switchPage('history')">
-        <span class="sidebar__icon">📋</span> History
+        <span class="sidebar__icon"><i data-lucide="clipboard-list"></i></span> <span class="sidebar__link-text">History</span>
       </button>
       <button class="sidebar__link" data-page="api" id="nav-api" onclick="switchPage('api')">
-        <span class="sidebar__icon">🔑</span> API Keys
+        <span class="sidebar__icon"><i data-lucide="key"></i></span> <span class="sidebar__link-text">API Keys</span>
       </button>
-      <button class="sidebar__link" data-page="settings" id="nav-settings" onclick="switchPage('settings')">
-        <span class="sidebar__icon">⚙️</span> Settings
-      </button>
+
     </nav>
-    <div class="sidebar__footer">
+    <div class="sidebar__footer" style="position: relative;">
       <div class="sidebar__plan">
         <div class="sidebar__plan-label">Free Plan</div>
         <div class="sidebar__plan-usage">
-          <div class="sidebar__plan-bar"><div class="sidebar__plan-fill" style="width:34%"></div></div>
+          <div class="sidebar__plan-bar">
+            <div class="sidebar__plan-fill" style="width:34%"></div>
+          </div>
           <span id="usage-count">0 / 1,000 docs</span>
         </div>
-        <button class="btn btn--primary btn--small" style="width:100%;justify-content:center;margin-top:10px;">Upgrade Plan</button>
+        <button class="btn btn--primary btn--small" style="width:100%;justify-content:center;margin-top:10px;" onclick="switchPage('plan')">Upgrade Plan</button>
+      </div>
+      
+      <!-- Profile Dropdown Menu -->
+      <div class="profile-dropdown" id="profile-dropdown">
+        <div class="profile-dropdown__header">
+          <div class="profile-avatar">BK</div>
+          <div class="profile-info">
+            <div class="profile-name">Bbook</div>
+            <div class="profile-role">Personal account</div>
+          </div>
+        </div>
+        <div class="profile-dropdown__divider"></div>
+        <button class="profile-dropdown__item" onclick="openThemeModal(); closeProfileDropdown();">
+          <i data-lucide="zap"></i> Personalization
+        </button>
+        <button class="profile-dropdown__item" onclick="openProfileModal(); closeProfileDropdown();">
+          <i data-lucide="user"></i> Profile
+        </button>
+        <button class="profile-dropdown__item" onclick="switchPage('settings'); closeProfileDropdown();">
+          <i data-lucide="settings"></i> Settings
+        </button>
+        <div class="profile-dropdown__item has-submenu">
+          <span style="display:flex;align-items:center;gap:12px;width:100%;"><i data-lucide="life-buoy"></i> Help <i data-lucide="chevron-right" style="margin-left:auto;width:14px;height:14px;"></i></span>
+          <div class="profile-submenu">
+            <button class="profile-dropdown__item"><i data-lucide="help-circle"></i> Help center</button>
+            <button class="profile-dropdown__item"><i data-lucide="edit-3"></i> Release notes</button>
+            <button class="profile-dropdown__item"><i data-lucide="arrow-down-circle"></i> Download apps</button>
+            <button class="profile-dropdown__item"><i data-lucide="command"></i> Keyboard shortcuts</button>
+            <div class="profile-dropdown__divider"></div>
+            <button class="profile-dropdown__item"><i data-lucide="file-text"></i> Terms of Service</button>
+            <button class="profile-dropdown__item"><i data-lucide="info"></i> Privacy Policy</button>
+            <button class="profile-dropdown__item"><i data-lucide="bug"></i> Report a bug</button>
+          </div>
+        </div>
+        <div class="profile-dropdown__divider"></div>
+        <button class="profile-dropdown__item text-danger" onclick="window.location.href='index.html'">
+          <i data-lucide="log-out"></i> Log out
+        </button>
+      </div>
+
+      <div class="sidebar__profile" onclick="toggleProfileDropdown(event)">
+        <div class="profile-avatar">BK</div>
+        <div class="profile-info">
+          <div class="profile-name">Bbook</div>
+          <div class="profile-role">Personal account</div>
+        </div>
       </div>
     </div>
   </aside>
@@ -60,51 +119,64 @@
       </div>
       <div class="topbar__right">
         <div class="topbar__search">
-          <span>🔍</span>
+          <span><i data-lucide="search"></i></span>
           <input type="text" placeholder="Search..." id="global-search">
         </div>
-        <button class="topbar__notif" id="notif-btn">🔔 <span class="topbar__badge">3</span></button>
-        <div class="topbar__user">
-          <div class="topbar__avatar">BK</div>
-          <span>Bbook</span>
-        </div>
+        <button class="topbar__notif" id="notif-btn"><i data-lucide="bell"></i> <span
+            class="topbar__badge">3</span></button>
       </div>
     </header>
 
     <!-- ===== PAGE: OVERVIEW ===== -->
     <div class="page active" id="page-overview">
       <div class="dash-grid-4">
-        <div class="metric-card">
-          <div class="metric-card__icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;">🔍</div>
-          <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-scans">0</div>
+        <div class="metric-card" style="--glow-color: rgba(10,132,255,0.15);">
+          <div class="metric-card__header">
+            <div class="metric-card__icon-wrap" style="color: #0a84ff; background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.2);">
+              <i data-lucide="search"></i>
+            </div>
+            <div class="metric-card__trend positive" id="trend-scans"><i data-lucide="trending-up"></i> +12.5%</div>
+          </div>
+          <div class="metric-card__content">
             <div class="metric-card__label">Total Scans</div>
+            <div class="metric-card__value" id="metric-scans">24,592</div>
           </div>
-          <div class="metric-card__trend" id="trend-scans">—</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-card__icon" style="background:linear-gradient(135deg,#e17055,#ff6b6b);color:#fff;">🚨</div>
-          <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-pii">0</div>
+        <div class="metric-card" style="--glow-color: rgba(255,69,69,0.15);">
+          <div class="metric-card__header">
+            <div class="metric-card__icon-wrap" style="color: #ff4545; background: rgba(255,69,69,0.1); border-color: rgba(255,69,69,0.2);">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="metric-card__trend negative" id="trend-pii"><i data-lucide="trending-down"></i> -2.4%</div>
+          </div>
+          <div class="metric-card__content">
             <div class="metric-card__label">PII Detected</div>
+            <div class="metric-card__value" id="metric-pii">3,841</div>
           </div>
-          <div class="metric-card__trend" id="trend-pii">—</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-card__icon" style="background:linear-gradient(135deg,#00b894,#55efc4);color:#fff;">✅</div>
-          <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-redacted">0</div>
+        <div class="metric-card" style="--glow-color: rgba(50,215,75,0.15);">
+          <div class="metric-card__header">
+            <div class="metric-card__icon-wrap" style="color: #32d74b; background: rgba(50,215,75,0.1); border-color: rgba(50,215,75,0.2);">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <div class="metric-card__trend positive" id="trend-redacted"><i data-lucide="check-circle"></i> 100%</div>
+          </div>
+          <div class="metric-card__content">
             <div class="metric-card__label">Auto-Redacted</div>
+            <div class="metric-card__value" id="metric-redacted">3,841</div>
           </div>
-          <div class="metric-card__trend" id="trend-redacted">—</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-card__icon" style="background:linear-gradient(135deg,#fdcb6e,#f39c12);color:#fff;">⚡</div>
-          <div class="metric-card__data">
-            <div class="metric-card__value" id="metric-ms">0ms</div>
-            <div class="metric-card__label">Avg Response</div>
+        <div class="metric-card" style="--glow-color: rgba(255,214,10,0.15);">
+          <div class="metric-card__header">
+            <div class="metric-card__icon-wrap" style="color: #ffd60a; background: rgba(255,214,10,0.1); border-color: rgba(255,214,10,0.2);">
+              <i data-lucide="zap"></i>
+            </div>
+            <div class="metric-card__trend positive" id="trend-ms"><i data-lucide="trending-down"></i> -5ms</div>
           </div>
-          <div class="metric-card__trend" id="trend-ms">—</div>
+          <div class="metric-card__content">
+            <div class="metric-card__label">Avg Response</div>
+            <div class="metric-card__value" id="metric-ms">142ms</div>
+          </div>
         </div>
       </div>
 
@@ -112,7 +184,7 @@
       <div class="dash-grid-2">
         <div class="chart-card">
           <div class="chart-card__header">
-            <h3>📈 Scans Over Time</h3>
+            <h3><i data-lucide="trending-up"></i> Scans Over Time</h3>
             <select class="chart-select" id="chart-range">
               <option value="7">Last 7 days</option>
               <option value="30" selected>Last 30 days</option>
@@ -125,7 +197,7 @@
         </div>
         <div class="chart-card">
           <div class="chart-card__header">
-            <h3>🎯 PII Types Breakdown</h3>
+            <h3><i data-lucide="crosshair"></i> PII Types Breakdown</h3>
           </div>
           <div class="chart-area" id="chart-types">
             <div class="donut-chart" id="donut-chart"></div>
@@ -137,8 +209,9 @@
       <!-- RECENT SCANS -->
       <div class="chart-card">
         <div class="chart-card__header">
-          <h3>🕐 Recent Scans</h3>
-          <button class="btn btn--ghost btn--small" onclick="switchPage('history')">View All →</button>
+          <h3><i data-lucide="clock"></i> Recent Scans</h3>
+          <button class="btn btn--ghost btn--small" onclick="switchPage('history')">View All <i
+              data-lucide="arrow-right"></i></button>
         </div>
         <div class="table-wrap">
           <table class="data-table" id="recent-table">
@@ -162,30 +235,33 @@
     <div class="page" id="page-scanner">
       <div class="app-card">
         <div class="app-card__header">
-          <div class="app-card__title">🛡️ PII Scanner</div>
+          <div class="app-card__title"><i data-lucide="shield-check"></i> PII Scanner</div>
           <div class="app-card__actions">
             <div class="toggle-group">
               <button class="toggle-group__btn active" data-mode="highlight">Highlight</button>
               <button class="toggle-group__btn" data-mode="redact">Redact</button>
             </div>
-            <button class="btn btn--ghost btn--small" id="scan-btn-sample">📝 Sample</button>
-            <button class="btn btn--ghost btn--small" id="scan-btn-clear">✕ Clear</button>
-            <button class="btn btn--primary btn--small" id="scan-btn-copy">📋 Copy Redacted</button>
+            <button class="btn btn--ghost btn--small" id="scan-btn-sample"><i data-lucide="file-text"></i>
+              Sample</button>
+            <button class="btn btn--ghost btn--small" id="scan-btn-clear"><i data-lucide="x"></i> Clear</button>
+            <button class="btn btn--primary btn--small" id="scan-btn-copy"><i data-lucide="clipboard-list"></i> Copy
+              Redacted</button>
           </div>
         </div>
         <div class="editor-layout">
           <div class="editor-pane">
-            <div class="editor-pane__label">📥 Input — Paste your text</div>
+            <div class="editor-pane__label"><i data-lucide="download"></i> Input — Paste your text</div>
             <textarea id="scan-input" placeholder="Paste text containing personal information here..."></textarea>
           </div>
           <div class="editor-pane">
-            <div class="editor-pane__label">📤 Output — Detected PII</div>
+            <div class="editor-pane__label"><i data-lucide="upload"></i> Output — Detected PII</div>
             <div class="output-area" id="scan-output"></div>
           </div>
         </div>
       </div>
       <div class="entities-panel">
-        <div class="entities-panel__title">🔍 Detected Entities: <span id="scan-entity-count" style="color:var(--accent-light);">0</span></div>
+        <div class="entities-panel__title"><i data-lucide="search"></i> Detected Entities: <span id="scan-entity-count"
+            style="color:var(--accent-light);">0</span></div>
         <div class="entities-grid" id="scan-entities-grid"></div>
       </div>
     </div>
@@ -194,11 +270,11 @@
     <div class="page" id="page-files">
       <div class="chart-card">
         <div class="chart-card__header">
-          <h3>📁 Bulk File Processing</h3>
+          <h3><i data-lucide="folder"></i> Bulk File Processing</h3>
           <span class="badge">Supports PDF, DOCX, XLSX, CSV, JSON, TXT</span>
         </div>
         <div class="upload-zone" id="upload-zone">
-          <div class="upload-zone__icon">📂</div>
+          <div class="upload-zone__icon"><i data-lucide="folder-open"></i></div>
           <div class="upload-zone__title">Drag & drop files here</div>
           <div class="upload-zone__desc">or click to browse — PDF, DOCX, XLSX, CSV, JSON, TXT up to 10MB</div>
           <input type="file" id="file-input" accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.json,.txt" multiple hidden>
@@ -210,7 +286,8 @@
       <div class="chart-card" id="file-queue-card" style="display:none;">
         <div class="chart-card__header">
           <h3>Processing Queue</h3>
-          <button class="btn btn--primary btn--small" id="process-all-btn">▶ Process All</button>
+          <button class="btn btn--primary btn--small" id="process-all-btn"><i data-lucide="play"></i> Process
+            All</button>
         </div>
         <div id="file-queue"></div>
       </div>
@@ -219,12 +296,19 @@
       <div class="chart-card" id="file-results-card" style="display:none;">
         <div class="chart-card__header">
           <h3>Results</h3>
-          <button class="btn btn--primary btn--small" id="download-all-btn">⬇ Download All Redacted</button>
+          <button class="btn btn--primary btn--small" id="download-all-btn"><i data-lucide="download"></i> Download All
+            Redacted</button>
         </div>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr><th>File</th><th>Size</th><th>PII Found</th><th>Status</th><th>Actions</th></tr>
+              <tr>
+                <th>File</th>
+                <th>Size</th>
+                <th>PII Found</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody id="file-results-tbody"></tbody>
           </table>
@@ -236,11 +320,13 @@
     <div class="page" id="page-history">
       <div class="chart-card">
         <div class="chart-card__header">
-          <h3>📋 Scan History</h3>
+          <h3><i data-lucide="clipboard-list"></i> Scan History</h3>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="date" class="form-input" id="history-date-from" style="width:140px;padding:6px 8px;font-size:13px;" title="From date">
+            <input type="date" class="form-input" id="history-date-from"
+              style="width:140px;padding:6px 8px;font-size:13px;" title="From date">
             <span style="color:var(--text-secondary);font-size:13px;">—</span>
-            <input type="date" class="form-input" id="history-date-to" style="width:140px;padding:6px 8px;font-size:13px;" title="To date">
+            <input type="date" class="form-input" id="history-date-to"
+              style="width:140px;padding:6px 8px;font-size:13px;" title="To date">
             <select class="chart-select" id="history-filter">
               <option value="all">All Sources</option>
               <option value="text">Text Scans</option>
@@ -257,58 +343,91 @@
               <option value="Location">Location</option>
               <option value="IP Address">IP Address</option>
             </select>
-            <button class="btn btn--outline btn--small" id="history-apply-filter">🔍 Filter</button>
-            <button class="btn btn--outline btn--small" id="export-history-btn">⬇ Export CSV</button>
+            <button class="btn btn--outline btn--small" id="history-apply-filter"><i data-lucide="search"></i>
+              Filter</button>
+            <button class="btn btn--outline btn--small" id="export-history-btn"><i data-lucide="download"></i> Export
+              CSV</button>
           </div>
         </div>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr><th>Date</th><th>Source</th><th>Input Preview</th><th>Entities</th><th>Types</th><th>Status</th></tr>
+              <tr>
+                <th>Date</th>
+                <th>Source</th>
+                <th>Input Preview</th>
+                <th>Entities</th>
+                <th>Types</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody id="history-tbody"></tbody>
           </table>
         </div>
         <div class="table-pagination">
-          <button class="btn btn--ghost btn--small" id="prev-page">← Previous</button>
+          <button class="btn btn--ghost btn--small" id="prev-page"><i data-lucide="arrow-left"></i> Previous</button>
           <span class="pagination-info" id="pagination-info">Page 1 of 5</span>
-          <button class="btn btn--ghost btn--small" id="next-page">Next →</button>
+          <button class="btn btn--ghost btn--small" id="next-page">Next <i data-lucide="arrow-right"></i></button>
         </div>
       </div>
     </div>
 
+
+
+    <!-- ===== PAGE: API KEYS ===== -->
     <!-- ===== PAGE: API KEYS ===== -->
     <div class="page" id="page-api">
-      <div class="chart-card">
-        <div class="chart-card__header">
-          <h3>🔑 API Keys</h3>
-          <button class="btn btn--primary btn--small" id="create-key-btn">+ Create New Key</button>
+      <div class="settings-layout">
+        <!-- Sub-sidebar -->
+        <div class="settings-sidebar">
+          <button class="settings-tab active" data-api-tab="keys" onclick="switchApiTab('keys')"><i data-lucide="key"></i> API Keys</button>
+          <button class="settings-tab" data-api-tab="quickstart" onclick="switchApiTab('quickstart')"><i data-lucide="zap"></i> Quick Start</button>
+          <button class="settings-tab" data-api-tab="webhooks" onclick="switchApiTab('webhooks')"><i data-lucide="webhook"></i> Webhooks</button>
         </div>
-        <p style="color:var(--text-secondary);margin-bottom:24px;">Use API keys to integrate RedactAI into your applications.</p>
-        <div id="api-keys-list"></div>
-      </div>
 
-      <div class="chart-card">
-        <div class="chart-card__header"><h3>📖 Quick Start</h3></div>
-        <div class="code-block">
-          <div class="code-block__header">
-            <span>cURL</span>
-            <button class="btn btn--ghost btn--small" id="copy-curl">📋 Copy</button>
+        <!-- Content Area -->
+        <div class="settings-content">
+          <!-- API Keys Section -->
+          <div class="settings-section active" id="api-section-keys">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                  <h2 class="settings-card__title" style="margin:0; font-size:18px;"><i data-lucide="key" style="vertical-align:middle;margin-right:8px;"></i> API Keys</h2>
+                  <button class="btn btn--primary btn--small" id="create-key-btn">+ Create New Key</button>
+                </div>
+                <p class="settings-card__desc">Use API keys to integrate RedactAI into your applications. Do not share your secret keys in publicly accessible areas such as GitHub.</p>
+                <div id="api-keys-list" style="margin-top:24px;"></div>
+              </div>
+            </div>
           </div>
-          <pre class="code-block__body"><code>curl -X POST https://api.redact-ai.com/v1/scan \
+
+          <!-- Quick Start Section -->
+          <div class="settings-section" id="api-section-quickstart">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <h2 class="settings-card__title" style="font-size:18px;"><i data-lucide="book-open" style="vertical-align:middle;margin-right:8px;"></i> Quick Start</h2>
+                <p class="settings-card__desc">Make your first API request using our endpoints.</p>
+                
+                <div class="code-block" style="margin-top:24px;">
+                  <div class="code-block__header">
+                    <span>cURL</span>
+                    <button class="btn btn--ghost btn--small" id="copy-curl"><i data-lucide="clipboard-list"></i> Copy</button>
+                  </div>
+                  <pre class="code-block__body"><code>curl -X POST https://api.redact-ai.com/v1/scan \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "text": "My name is Rahul Sharma, email: rahul@gmail.com",
     "mode": "redact"
   }'</code></pre>
-        </div>
-        <div class="code-block" style="margin-top:16px;">
-          <div class="code-block__header">
-            <span>Python</span>
-            <button class="btn btn--ghost btn--small" id="copy-python">📋 Copy</button>
-          </div>
-          <pre class="code-block__body"><code>import requests
+                </div>
+                
+                <div class="code-block" style="margin-top:16px;">
+                  <div class="code-block__header">
+                    <span>Python</span>
+                    <button class="btn btn--ghost btn--small" id="copy-python"><i data-lucide="clipboard-list"></i> Copy</button>
+                  </div>
+                  <pre class="code-block__body"><code>import requests
 
 response = requests.post(
     "https://api.redact-ai.com/v1/scan",
@@ -319,12 +438,13 @@ response = requests.post(
     }
 )
 print(response.json())</code></pre>
-        </div>
-        <div class="code-block" style="margin-top:16px;">
-          <div class="code-block__header">
-            <span>Response</span>
-          </div>
-          <pre class="code-block__body"><code>{
+                </div>
+                
+                <div class="code-block" style="margin-top:16px;">
+                  <div class="code-block__header">
+                    <span>Response</span>
+                  </div>
+                  <pre class="code-block__body"><code>{
   "redacted": "My name is [NAME], email: [EMAIL]",
   "entities": [
     {"type": "name", "value": "Rahul Sharma", "start": 11, "end": 23},
@@ -333,115 +453,292 @@ print(response.json())</code></pre>
   "count": 2,
   "processing_ms": 18
 }</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Webhooks Section -->
+          <div class="settings-section" id="api-section-webhooks">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                  <h2 class="settings-card__title" style="margin:0; font-size:18px;"><i data-lucide="webhook" style="vertical-align:middle;margin-right:8px;"></i> Webhooks</h2>
+                  <button class="btn btn--outline btn--small">+ Add Endpoint</button>
+                </div>
+                <p class="settings-card__desc">Listen to events on your RedactAI account so your integration can automatically trigger reactions.</p>
+                
+                <div style="text-align:center; padding: 60px 40px; border: 1px dashed var(--border-strong); border-radius: var(--radius); margin-top: 24px; background: rgba(255,255,255,0.02);">
+                  <i data-lucide="webhook" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                  <p style="color: var(--text-secondary); margin-bottom: 24px;">No webhooks configured yet.</p>
+                  <button class="btn btn--outline btn--small" style="margin:0 auto;">Learn More</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
 
     <!-- ===== PAGE: SETTINGS ===== -->
     <div class="page" id="page-settings">
-      <div class="dash-grid-2">
-        <div class="chart-card">
-          <div class="chart-card__header"><h3>👤 Profile</h3></div>
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" value="Bbook" id="setting-name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" value="bbook@example.com" id="setting-email">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Organization</label>
-            <input type="text" class="form-input" placeholder="Your company name" id="setting-org">
-          </div>
-          <button class="btn btn--primary" style="margin-top:8px;">Save Changes</button>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card__header"><h3>🛡️ Detection Settings</h3></div>
-          <div class="form-group">
-            <label class="form-label">Detection Sensitivity</label>
-            <select class="form-input" id="sensitivity">
-              <option value="low">Low — fewer false positives</option>
-              <option value="medium" selected>Medium — balanced</option>
-              <option value="high">High — catch everything</option>
-            </select>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Email Addresses</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Phone Numbers</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Person Names</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Government IDs (Aadhaar, PAN, SSN)</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Credit Cards</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect IP Addresses</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
-            <span>Detect Dates of Birth</span>
-            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-          </div>
-          <button class="btn btn--primary" style="margin-top:12px;">Save Settings</button>
-        </div>
-      </div>
+      <div class="settings-layout">
 
-      <!-- Custom Detectors -->
-      <div class="chart-card">
-        <div class="chart-card__header">
-          <h3>🔧 Custom Detectors</h3>
-          <button class="btn btn--primary btn--small" id="add-detector-btn">+ Add Detector</button>
+        <!-- Sub-sidebar -->
+        <div class="settings-sidebar">
+          <button class="settings-tab active" data-tab="general" onclick="switchSettingsTab('general')"><i
+              data-lucide="user"></i> General</button>
+          <button class="settings-tab" data-tab="detection" onclick="switchSettingsTab('detection')"><i
+              data-lucide="shield-check"></i> Detection Rules</button>
+          <button class="settings-tab" data-tab="advanced" onclick="switchSettingsTab('advanced')"><i
+              data-lucide="wrench"></i> Advanced</button>
         </div>
-        <p style="color:var(--text-secondary);margin-bottom:16px;font-size:14px;">Define custom regex patterns to detect company-specific PII (employee IDs, project codes, internal identifiers).</p>
-        <div id="custom-detectors-list"></div>
-        <div id="detector-form" style="display:none;margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);">
-          <div class="form-group">
-            <label class="form-label">Detector Name</label>
-            <input type="text" class="form-input" id="detector-name" placeholder="e.g. Employee ID">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Entity Type (uppercase, no spaces)</label>
-            <input type="text" class="form-input" id="detector-entity" placeholder="e.g. EMPLOYEE_ID">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Regex Pattern</label>
-            <input type="text" class="form-input" id="detector-regex" placeholder="e.g. EMP-\d{6}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Confidence Score (0.0 - 1.0)</label>
-            <input type="number" class="form-input" id="detector-score" value="0.8" min="0" max="1" step="0.1">
-          </div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="btn btn--primary" id="save-detector-btn">Save Detector</button>
-            <button class="btn btn--ghost" id="cancel-detector-btn">Cancel</button>
-          </div>
-        </div>
-      </div>
 
-      <div class="chart-card">
-        <div class="chart-card__header"><h3>⚠️ Danger Zone</h3></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-weight:600;">Delete Account</div>
-            <div style="color:var(--text-secondary);font-size:14px;">Permanently delete your account and all data.</div>
+        <div class="settings-content">
+
+          <!-- SECTION: GENERAL -->
+          <div class="settings-section active" id="settings-tab-general">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <div class="settings-card__title">Profile</div>
+                <div class="settings-card__desc">Manage your personal information and organization.</div>
+
+                <div class="form-group" style="max-width: 400px;">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" class="form-input" value="Bbook" id="setting-name">
+                </div>
+                <div class="form-group" style="max-width: 400px;">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-input" value="bbook@example.com" id="setting-email">
+                </div>
+                <div class="form-group" style="max-width: 400px; margin-bottom: 0;">
+                  <label class="form-label">Organization</label>
+                  <input type="text" class="form-input" placeholder="Your company name" id="setting-org">
+                </div>
+              </div>
+              <div class="settings-card__footer">
+                <div class="settings-card__footer-text">Updates will take effect immediately.</div>
+                <button class="btn btn--primary btn--small">Save Changes</button>
+              </div>
+            </div>
+
+            <div class="settings-card" style="border-color: rgba(255,69,69,0.3); margin-top: 48px;">
+              <div class="settings-card__body">
+                <div class="settings-card__title" style="color: var(--danger);">Delete Account</div>
+                <div class="settings-card__desc" style="margin-bottom: 0;">Permanently delete your account and all
+                  associated data. This action cannot be undone.</div>
+              </div>
+              <div class="settings-card__footer"
+                style="background: rgba(255,69,69,0.05); border-color: rgba(255,69,69,0.1);">
+                <div class="settings-card__footer-text" style="color: rgba(255,255,255,0.5);">Please be certain.</div>
+                <button class="btn btn--danger btn--small">Delete Account</button>
+              </div>
+            </div>
           </div>
-          <button class="btn btn--danger">Delete Account</button>
+
+
+
+          <!-- SECTION: DETECTION -->
+          <div class="settings-section" id="settings-tab-detection">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <div class="settings-card__title">Detection Settings</div>
+                <div class="settings-card__desc">Configure how RedactAI scans and identifies sensitive information.
+                </div>
+
+                <div class="form-group" style="max-width: 400px; margin-bottom: 24px;">
+                  <label class="form-label">Detection Sensitivity</label>
+                  <select class="form-input" id="sensitivity">
+                    <option value="low">Low — fewer false positives</option>
+                    <option value="medium" selected>Medium — balanced</option>
+                    <option value="high">High — catch everything</option>
+                  </select>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:12px;max-width:600px;">
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Email Addresses</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Phone Numbers</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Person Names</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Government IDs (Aadhaar, PAN, SSN)</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Credit Cards</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect IP Addresses</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                  <div class="toggle-row" style="border:none;padding:4px 0;">
+                    <span>Detect Dates of Birth</span>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card__footer">
+                <div class="settings-card__footer-text">Applies to both dashboard scans and API calls.</div>
+                <button class="btn btn--primary btn--small">Save Settings</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION: ADVANCED -->
+          <div class="settings-section" id="settings-tab-advanced">
+            <div class="settings-card">
+              <div class="settings-card__body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <div class="settings-card__title" style="margin-bottom:0;">Custom Detectors</div>
+                  <button class="btn btn--primary btn--small" id="add-detector-btn">+ Add Detector</button>
+                </div>
+                <div class="settings-card__desc">Define custom regex patterns to detect company-specific PII (employee
+                  IDs, project codes, internal identifiers).</div>
+
+                <div id="custom-detectors-list"></div>
+
+                <div id="detector-form"
+                  style="display:none;margin-top:16px;padding:20px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);">
+                  <div class="form-group">
+                    <label class="form-label">Detector Name</label>
+                    <input type="text" class="form-input" id="detector-name" placeholder="e.g. Employee ID">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Entity Type (uppercase, no spaces)</label>
+                    <input type="text" class="form-input" id="detector-entity" placeholder="e.g. EMPLOYEE_ID">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Regex Pattern</label>
+                    <input type="text" class="form-input" id="detector-regex" placeholder="e.g. EMP-\d{6}">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Confidence Score (0.0 - 1.0)</label>
+                    <input type="number" class="form-input" id="detector-score" value="0.8" min="0" max="1" step="0.1">
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:20px;">
+                    <button class="btn btn--primary" id="save-detector-btn">Save Detector</button>
+                    <button class="btn btn--ghost" id="cancel-detector-btn">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   </main>
+
+  <!-- ===== PAGE: PLAN (FULL SCREEN OVERLAY) ===== -->
+  <div class="page" id="page-plan" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-primary);z-index:999999;overflow-y:auto;padding:0;">
+    <div style="max-width:1200px;margin:0 auto;padding:60px 32px 100px;position:relative;">
+      <button class="btn btn--ghost" onclick="switchPage('overview')" style="position:absolute;top:40px;left:32px;font-weight:600;"><i data-lucide="arrow-left"></i> Back to Dashboard</button>
+      
+      <div style="text-align:center;margin-bottom:64px;margin-top:20px;">
+        <h2 style="font-size:42px;font-weight:800;color:#fff;margin-bottom:16px;letter-spacing:-1px;">Upgrade your Data Security</h2>
+        <p style="font-size:18px;color:var(--text-secondary);max-width:600px;margin:0 auto;">
+          Choose the right data protection plan for your scale. Seamless integration. No hidden fees.
+        </p>
+      </div>
+
+      <div class="dash-grid-4" style="align-items:stretch;">
+        <!-- Starter -->
+        <div style="border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);border-radius:24px;padding:32px;display:flex;flex-direction:column;">
+          <h3 style="margin:0;font-size:20px;color:#fff;font-weight:700;">Starter</h3>
+          <p style="margin:8px 0 24px;color:var(--text-secondary);font-size:13px;min-height:36px;">For individuals and small projects</p>
+          <div style="font-size:42px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1;">
+            $0<span style="font-size:15px;color:var(--text-secondary);font-weight:500;"> / mo</span>
+          </div>
+          <p style="margin:0 0 32px;color:#10a37f;font-size:13px;font-weight:600;">Free forever</p>
+          
+          <button class="btn btn--outline" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:32px;color:#fff;border-color:rgba(255,255,255,0.2);">Your Current Plan</button>
+          
+          <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:var(--text-secondary);line-height:2.5;flex-grow:1;">
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> <strong>1,000 documents / month</strong></li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> All 12+ PII types</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Web scanner + API</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Copy redacted text</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Community support</li>
+          </ul>
+        </div>
+
+        <!-- Business -->
+        <div style="border:1px solid rgba(10,132,255,0.4);background:linear-gradient(180deg, rgba(10,132,255,0.08) 0%, rgba(10,132,255,0.01) 100%);border-radius:24px;padding:32px;display:flex;flex-direction:column;position:relative;box-shadow:0 12px 40px rgba(10,132,255,0.15);transform:scale(1.02);z-index:2;">
+          <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#0a84ff;color:#fff;font-size:10px;font-weight:800;padding:6px 16px;border-radius:100px;text-transform:uppercase;box-shadow:0 4px 12px rgba(10,132,255,0.4);white-space:nowrap;">Most Popular</div>
+          <h3 style="margin:0;font-size:20px;color:#fff;font-weight:700;">Business</h3>
+          <p style="margin:8px 0 24px;color:var(--text-secondary);font-size:13px;min-height:36px;">For teams and growing companies</p>
+          <div style="font-size:42px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1;">
+            $49<span style="font-size:15px;color:var(--text-secondary);font-weight:500;"> / mo</span>
+          </div>
+          <p style="margin:0 0 32px;color:var(--text-secondary);font-size:13px;">Billed monthly</p>
+          
+          <button class="btn btn--primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:32px;box-shadow:0 4px 16px rgba(10,132,255,0.3);">Start 14-Day Trial</button>
+          
+          <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:var(--text-secondary);line-height:2.5;flex-grow:1;">
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> <strong>50,000 documents / month</strong></li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> Batch file upload (CSV, JSON, TXT)</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> Full REST API with higher limits</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> Compliance reports (GDPR, HIPAA)</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> Scan history & export</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#0a84ff;width:16px;margin-top:8px;"></i> Priority email support</li>
+          </ul>
+        </div>
+        
+        <!-- Enterprise -->
+        <div style="border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);border-radius:24px;padding:32px;display:flex;flex-direction:column;">
+          <h3 style="margin:0;font-size:20px;color:#fff;font-weight:700;">Enterprise</h3>
+          <p style="margin:8px 0 24px;color:var(--text-secondary);font-size:13px;min-height:36px;">For large organizations & MSPs</p>
+          <div style="font-size:42px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1;">
+            $299<span style="font-size:15px;color:var(--text-secondary);font-weight:500;"> / mo</span>
+          </div>
+          <p style="margin:0 0 32px;color:var(--text-secondary);font-size:13px;">Custom billing available</p>
+          
+          <button class="btn btn--outline" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:32px;color:#fff;">Contact Sales</button>
+          
+          <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:var(--text-secondary);line-height:2.5;flex-grow:1;">
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> <strong>1,000,000 documents / month</strong></li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Dedicated API instance</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Self-host / on-premise option</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Custom PII detection rules</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> SOC2 compliance report</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> SLA & dedicated support</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> SSO & team management</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> White-label for MSPs</li>
+          </ul>
+        </div>
+        
+        <!-- Custom -->
+        <div style="border:1px solid rgba(255,255,255,0.05);background:linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);border-radius:24px;padding:32px;display:flex;flex-direction:column;">
+          <h3 style="margin:0;font-size:20px;color:#fff;font-weight:700;">Custom</h3>
+          <p style="margin:8px 0 24px;color:var(--text-secondary);font-size:13px;min-height:36px;">For massive scale operations</p>
+          <div style="font-size:38px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1;padding-top:4px;">
+            Custom
+          </div>
+          <p style="margin:0 0 32px;color:var(--text-secondary);font-size:13px;">Tailored billing</p>
+          
+          <button class="btn btn--outline" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:32px;">Contact Sales</button>
+          
+          <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:var(--text-secondary);line-height:2.5;flex-grow:1;">
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> <strong>Custom limits</strong></li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> White-label for MSPs</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Multi-region deployments</li>
+            <li style="display:flex;align-items:flex-start;gap:12px;"><i data-lucide="check" style="color:#fff;width:16px;margin-top:8px;"></i> Priority feature requests</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
   <!-- Navigation function MUST load before external scripts -->
   <script>
     function switchPage(pageId) {
@@ -457,6 +754,164 @@ print(response.json())</code></pre>
       if (title) title.textContent = nav ? nav.textContent.trim() : pageId;
     }
   </script>
+  <script>
+    function switchSettingsTab(tabId) {
+      var tabs = document.querySelectorAll('.settings-tab');
+      var sections = document.querySelectorAll('.settings-section');
+      tabs.forEach(t => t.classList.remove('active'));
+      sections.forEach(s => s.classList.remove('active'));
+      
+      var selectedTab = document.querySelector('.settings-tab[data-tab="' + tabId + '"]');
+      var selectedSection = document.getElementById('settings-tab-' + (tabId === 'wrench' ? 'advanced' : tabId));
+      if (selectedTab) selectedTab.classList.add('active');
+      if (selectedSection) selectedSection.classList.add('active');
+    }
+  </script>
+  <!-- EDIT PROFILE MODAL -->
+  <div class="modal-overlay" id="edit-profile-modal">
+    <div class="profile-modal">
+      <div class="profile-modal__header">
+        <h3>Edit profile</h3>
+      </div>
+      <div class="profile-modal__body">
+        <div class="modal-avatar-wrapper">
+          <div class="modal-avatar-large">
+            <span>BL</span>
+            <button class="modal-avatar-cam"><i data-lucide="camera"></i></button>
+          </div>
+        </div>
+        
+        <div class="modal-input-group">
+          <label>Display name</label>
+          <input type="text" value="bleu.x">
+        </div>
+        <div class="modal-input-group">
+          <label>Username</label>
+          <input type="text" value="bleu.x">
+        </div>
+        
+        <p class="modal-hint">Your profile helps people recognize you in group chats.</p>
+      </div>
+      <div class="profile-modal__footer">
+        <button class="btn btn--ghost" onclick="closeProfileModal()">Cancel</button>
+        <button class="btn btn--primary" onclick="closeProfileModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT THEME MODAL -->
+  <div class="modal-overlay" id="edit-theme-modal">
+    <div class="profile-modal">
+      <div class="profile-modal__header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Personalization</h3>
+        <button style="background:none; border:none; color:var(--text-secondary); cursor:pointer;" onclick="closeThemeModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="profile-modal__body">
+        
+        <div style="margin-bottom:32px; margin-top: 8px;">
+          <label style="display:block; font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">Color Mode</label>
+          <div class="theme-toggles">
+            <button class="theme-toggle active" onclick="setTheme('dark', this)">
+              <i data-lucide="moon"></i> Dark
+            </button>
+            <button class="theme-toggle" onclick="setTheme('light', this)">
+              <i data-lucide="sun"></i> Light
+            </button>
+            <button class="theme-toggle" onclick="setTheme('auto', this)">
+              <i data-lucide="monitor"></i> Auto
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <label style="display:block; font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">Accent Color</label>
+          <div class="accent-colors">
+            <button class="accent-btn active" style="background:#00e6a8;" onclick="setAccent('#00e6a8', this)"></button>
+            <button class="accent-btn" style="background:#74c0fc;" onclick="setAccent('#74c0fc', this)"></button>
+            <button class="accent-btn" style="background:#f472b6;" onclick="setAccent('#f472b6', this)"></button>
+            <button class="accent-btn" style="background:#fdcb6e;" onclick="setAccent('#fdcb6e', this)"></button>
+            <button class="accent-btn" style="background:#a29bfe;" onclick="setAccent('#a29bfe', this)"></button>
+          </div>
+        </div>
+
+      </div>
+      <div class="profile-modal__footer">
+        <button class="btn btn--primary" style="width:100%; justify-content:center;" onclick="closeThemeModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleProfileDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('profile-dropdown').classList.toggle('show');
+    }
+    function closeProfileDropdown() {
+      document.getElementById('profile-dropdown').classList.remove('show');
+    }
+    document.addEventListener('click', function(e) {
+      var dropdown = document.getElementById('profile-dropdown');
+      var profileBtn = document.querySelector('.sidebar__profile');
+      if (dropdown && !dropdown.contains(e.target) && (!profileBtn || !profileBtn.contains(e.target))) {
+        closeProfileDropdown();
+      }
+    });
+
+    // Modal Logic
+    function openProfileModal() {
+      document.getElementById('edit-profile-modal').classList.add('show');
+    }
+    function closeProfileModal() {
+      document.getElementById('edit-profile-modal').classList.remove('show');
+    }
+    
+    function openThemeModal() {
+      document.getElementById('edit-theme-modal').classList.add('show');
+    }
+    function closeThemeModal() {
+      document.getElementById('edit-theme-modal').classList.remove('show');
+    }
+
+    function setTheme(mode, btn) {
+      document.querySelectorAll('.theme-toggle').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      
+      if (mode === 'light') {
+        document.body.classList.add('theme-light');
+      } else {
+        document.body.classList.remove('theme-light');
+      }
+    }
+
+    function setAccent(color, btn) {
+      document.querySelectorAll('.accent-btn').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      
+      document.documentElement.style.setProperty('--accent-light', color);
+      document.documentElement.style.setProperty('--accent-glow', color + '33'); // 20% opacity hex
+    }
+  </script>
+  <script>
+    document.querySelectorAll('.navbar__logo').forEach(logo => {
+      logo.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Play logo bounce animation
+        logo.classList.remove('is-animating');
+        void logo.offsetWidth;
+        logo.classList.add('is-animating');
+        
+        // Toggle the bouncy sidebar collapse
+        document.body.classList.toggle('sidebar-collapsed');
+        
+        setTimeout(() => {
+          logo.classList.remove('is-animating');
+        }, 600);
+      });
+    });
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>lucide.createIcons();</script>
   <script src="dashboard.js"></script>
 </body>
+
 </html>
