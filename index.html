@@ -31,7 +31,64 @@
         <div class="navbar__logo-text">Redact<span>AI</span></div>
       </a>
       <ul class="navbar__links">
-        <li><a href="#how-it-works">How It Works</a></li>
+        <li class="has-dropdown">
+          <a href="#">Products <i data-lucide="chevron-down"></i></a>
+          <div class="dropdown-menu">
+            <div class="dropdown-grid">
+              <div class="dropdown-col">
+                <div class="dropdown-title">Core Products</div>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="shield"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">DPDP Scanner</span>
+                    <span class="dropdown-desc">Deep scan for DPDP compliance</span>
+                  </div>
+                </a>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="check-circle"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">DPDP Quick Check</span>
+                    <span class="dropdown-desc">Instant compliance validation</span>
+                  </div>
+                </a>
+              </div>
+              <div class="dropdown-col">
+                <div class="dropdown-title">Security Testing</div>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="alert-triangle"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">AI Leak of Your Product</span>
+                    <span class="dropdown-desc">Discover leaked sensitive models</span>
+                  </div>
+                </a>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="zap"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">Breach Simulator</span>
+                    <span class="dropdown-desc">Simulate data breach scenarios</span>
+                  </div>
+                </a>
+              </div>
+              <div class="dropdown-col">
+                <div class="dropdown-title">Analytics & Tools</div>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="network"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">Data Flow Visualizer</span>
+                    <span class="dropdown-desc">Map your PII data movement</span>
+                  </div>
+                </a>
+                <a href="dashboard.html" class="dropdown-link">
+                  <div class="dropdown-icon"><i data-lucide="sword"></i></div>
+                  <div class="dropdown-text">
+                    <span class="dropdown-name">Synthetic Attack Suite</span>
+                    <span class="dropdown-desc">Test defenses with fake data</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </li>
         <li><a href="#use-cases">Use Cases</a></li>
         <li><a href="#demo">Live Demo</a></li>
         <li><a href="#pricing">Pricing</a></li>
@@ -81,6 +138,25 @@
         <div class="stat">
           <div class="stat__value">0</div>
           <div class="stat__label">Data Stored</div>
+        </div>
+      </div>
+      </div>
+
+      <!-- PREMIUM FLOATING MOCKUP -->
+      <div class="hero-mockup animate-in animate-delay-3">
+        <div class="hero-mockup__glow"></div>
+        <div class="hero-mockup__window">
+          <div class="hero-mockup__header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <div class="title">api.redactai.com/gateway/logs</div>
+            <div class="actions"><i data-lucide="wifi"></i> Live</div>
+          </div>
+          <div class="hero-mockup__body">
+            <div class="log-line"><span class="time">14:02:01.213</span> <span class="method">POST</span> /v1/chat/completions <span class="status status--ok">200 OK</span></div>
+            <div class="log-line log-line--alert"><i data-lucide="shield-alert"></i> INTERCEPT: Payload contains [CREDIT_CARD], [PERSON_NAME]</div>
+            <div class="log-line log-line--action"><i data-lucide="check-circle"></i> Vault applied: PII fully redacted before routing to OpenAI</div>
+            <div class="log-line"><span class="time">14:02:02.045</span> <span class="method">REPLY</span> Provider (gpt-4o) returned secure response</div>
+          </div>
         </div>
       </div>
     </div>
@@ -309,42 +385,62 @@
         <p class="section__desc">Build powerful data protection into your apps in minutes with our blazing-fast REST API.</p>
       </div>
 
-      <div class="ide-window">
-        <div class="ide-window__header">
+      <div class="ide-wrapper">
+        <div class="ide-window">
+          <div class="ide-window__header">
           <div class="ide-window__dots">
             <span></span><span></span><span></span>
           </div>
-          <div class="ide-window__title">main.py</div>
+          <div class="ide-window__tabs">
+            <button class="ide-tab active" data-lang="python">Python</button>
+            <button class="ide-tab" data-lang="node">Node.js</button>
+            <button class="ide-tab" data-lang="curl">cURL</button>
+          </div>
           <div class="ide-window__actions">
-            <button class="btn btn--primary btn--small" style="padding: 4px 12px; font-size: 12px;"><i data-lucide="play" style="width:12px;height:12px;margin-right:4px;"></i> Run</button>
+            <button class="btn btn--outline btn--small copy-code-btn" style="padding: 4px 12px; font-size: 12px; border-color: rgba(255,255,255,0.1);"><i data-lucide="copy" style="width:14px;height:14px;margin-right:4px;"></i> Copy</button>
           </div>
         </div>
-        <div class="ide-window__body">
-          <div class="ide-window__sidebar">
-            <div class="active"><i data-lucide="file-code"></i> main.py</div>
-            <div><i data-lucide="file-json"></i> package.json</div>
-            <div><i data-lucide="file-text"></i> .env</div>
-          </div>
-          <div class="ide-window__code">
+        <div class="ide-window__body" style="padding: 32px 24px; font-size: 14px; display: block;">
+          <div class="ide-code-block" id="code-python">
 <pre><code><span style="color:#c678dd;">import</span> requests
 
-<span style="color:#5c6370;"># 1. Initialize with your API Key</span>
+<span style="color:#5c6370;"># 1. Route requests through RedactAI Gateway</span>
 headers = {<span style="color:#98c379;">"Authorization"</span>: <span style="color:#98c379;">"Bearer sk_live_..."</span>}
 
 <span style="color:#5c6370;"># 2. Send text containing sensitive data</span>
 payload = {
-    <span style="color:#98c379;">"text"</span>: <span style="color:#98c379;">"Invoice for Elon Musk, card ending in 4242"</span>,
-    <span style="color:#98c379;">"mode"</span>: <span style="color:#98c379;">"redact"</span>
+    <span style="color:#98c379;">"text"</span>: <span style="color:#98c379;">"Invoice for Elon Musk, card ending in 4242"</span>
 }
 
-<span style="color:#5c6370;"># 3. Get instant redacted results</span>
+<span style="color:#5c6370;"># 3. Get instant redacted results back</span>
 response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/v1/scan"</span>, json=payload, headers=headers)
-<span style="color:#56b6c2;">print</span>(response.json())
+<span style="color:#56b6c2;">print</span>(response.json())</code></pre>
+          </div>
+          
+          <div class="ide-code-block" id="code-node" style="display:none;">
+<pre><code><span style="color:#c678dd;">import</span> { RedactAI } <span style="color:#c678dd;">from</span> <span style="color:#98c379;">"redact-ai"</span>;
 
-<span style="color:#5c6370;"># Output: 
-# { "redacted": "Invoice for [NAME], card ending in [CREDIT_CARD]" }</span></code></pre>
+<span style="color:#5c6370;">// 1. Initialize the Gateway client</span>
+<span style="color:#c678dd;">const</span> client = <span style="color:#e5c07b;">new</span> RedactAI(process.env.REDACT_API_KEY);
+
+<span style="color:#5c6370;">// 2. Scan and redact in one line</span>
+<span style="color:#c678dd;">const</span> result = <span style="color:#c678dd;">await</span> client.scan({
+  <span style="color:#d19a66;">text</span>: <span style="color:#98c379;">"Invoice for Elon Musk, card ending in 4242"</span>
+});
+
+<span style="color:#e5c07b;">console</span>.log(result.redacted);</code></pre>
+          </div>
+          
+          <div class="ide-code-block" id="code-curl" style="display:none;">
+<pre><code>curl -X POST https://api.redactai.com/v1/scan \
+  -H <span style="color:#98c379;">"Authorization: Bearer sk_live_..."</span> \
+  -H <span style="color:#98c379;">"Content-Type: application/json"</span> \
+  -d <span style="color:#98c379;">'{
+    "text": "Invoice for Elon Musk, card ending in 4242"
+  }'</span></code></pre>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </section>
@@ -619,13 +715,29 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
       </form>
     </div>
     <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="redact-bot__svg">
-      <rect x="25" y="40" width="50" height="40" rx="10" fill="#1e1e24" stroke="var(--glass-border)" stroke-width="2"/>
-      <path d="M 30 40 C 30 15, 70 15, 70 40" fill="#282c34" stroke="var(--glass-border)" stroke-width="2"/>
-      <rect x="35" y="25" width="30" height="10" rx="4" fill="#000" />
-      <circle cx="40" cy="30" r="3" fill="var(--accent-light)" class="bot-eye"/>
-      <path d="M 25 50 L 10 60" stroke="#1e1e24" stroke-width="6" stroke-linecap="round"/>
-      <path d="M 75 50 L 90 60" stroke="#1e1e24" stroke-width="6" stroke-linecap="round"/>
-      <rect x="85" y="50" width="8" height="24" fill="#111" rx="2" transform="rotate(-30 85 50)"/>
+      <!-- Glow effect for the whole bot -->
+      <filter id="bot-glow">
+        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      <!-- Head Dome -->
+      <path d="M 30 40 C 30 15, 70 15, 70 40" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+      <!-- Body -->
+      <rect x="25" y="40" width="50" height="40" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+      <!-- Visor -->
+      <rect x="35" y="25" width="30" height="10" rx="4" fill="#0f172a" />
+      <!-- Glowing Eye -->
+      <circle cx="40" cy="30" r="3" fill="#22d3ee" filter="url(#bot-glow)" class="bot-eye"/>
+      <!-- Left Arm -->
+      <path d="M 25 50 L 10 60" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
+      <!-- Right Arm -->
+      <path d="M 75 50 L 90 60" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
+      <!-- Marker Pen Handle -->
+      <rect x="85" y="50" width="8" height="24" fill="#334155" rx="2" transform="rotate(-30 85 50)"/>
+      <!-- Marker Pen Tip -->
       <rect x="85" y="50" width="8" height="6" fill="#ff5f56" rx="2" transform="rotate(-30 85 50)"/>
     </svg>
   </div>
@@ -677,6 +789,19 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
     // Stop propagation so clicking input doesn't trigger anything else
     botForm.addEventListener('click', e => e.stopPropagation());
 
+    // Close bot input when clicking outside
+    document.addEventListener('click', (e) => {
+      if (isChatting && !botContainer.contains(e.target)) {
+        isChatting = false;
+        botContainer.classList.remove('is-chatting');
+        botForm.style.display = 'none';
+        botInput.value = '';
+        botText.style.display = 'block';
+        botText.textContent = "Tell me another secret!";
+        startStories();
+      }
+    });
+
     function addHistoryMsg(html, type) {
       const msg = document.createElement('div');
       msg.className = `bot-history__msg bot-history__msg--${type}`;
@@ -697,9 +822,18 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
       botInput.value = '';
       addHistoryMsg(`<strong>You:</strong> ${text}`, 'user');
       
+      // Add typing indicator
+      const typingMsg = document.createElement('div');
+      typingMsg.className = `bot-history__msg bot-history__msg--bot`;
+      typingMsg.innerHTML = `<strong>Bot:</strong> <span style="opacity: 0.6;">typing...</span>`;
+      botHistory.appendChild(typingMsg);
+
+      // Scroll to bottom
+      botHistory.scrollTop = botHistory.scrollHeight;
+
       // Fireworks AI LLM Redaction
       let redactedText = text;
-      botInput.placeholder = "AI is Scanning...";
+      botInput.placeholder = "Processing...";
       botInput.disabled = true;
 
       try {
@@ -711,7 +845,7 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "accounts/fireworks/models/deepseek-v4-pro",
+            model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
             messages: [
               { role: "system", content: "You are RedactBot, the official AI mascot for RedactAI. RedactAI is an enterprise-grade API that instantly discovers and redacts PII, PCI, and PHI from text, files, and databases with a strict zero-data retention policy. You are helpful, snarky, and obsessed with data privacy. If the user asks a question about RedactAI or the website, answer it concisely. IMPORTANT: If the user's message contains ANY personal data (names, emails, passwords, phone numbers, credit cards), you MUST reply by fully redacting that data with tags like [NAME] or [EMAIL], and proudly point out that you saved them from a privacy breach. Keep all responses under 3 sentences." },
               { role: "user", content: text }
@@ -732,7 +866,9 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
         redactedText = fallbackRedact(text);
       }
 
-      addHistoryMsg(`<strong>Bot:</strong> ${redactedText}`, 'bot');
+      // Update typing message with final response
+      typingMsg.innerHTML = `<strong>Bot:</strong> ${redactedText}`;
+      botHistory.scrollTop = botHistory.scrollHeight;
       botInput.placeholder = "Tell me a secret...";
       botInput.disabled = false;
       botInput.focus();
@@ -806,6 +942,32 @@ response = requests.post(<span style="color:#98c379;">"https://api.redactai.com/
         const url = document.getElementById('scanUrl')?.value || '';
         if (!url) { document.getElementById('scanUrl')?.focus(); return; }
         window.location.href = 'scan.html?url=' + encodeURIComponent(url);
+      });
+    } // <-- THIS WAS MISSING
+    
+    // ===== IDE TABS LOGIC =====
+    const ideTabs = document.querySelectorAll('.ide-tab');
+    const codeBlocks = document.querySelectorAll('.ide-code-block');
+    ideTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        ideTabs.forEach(t => t.classList.remove('active'));
+        codeBlocks.forEach(c => c.style.display = 'none');
+        tab.classList.add('active');
+        document.getElementById(`code-${tab.dataset.lang}`).style.display = 'block';
+      });
+    });
+
+    const copyBtn = document.querySelector('.copy-code-btn');
+    if(copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const activeBlock = document.querySelector('.ide-code-block[style*="display: block"]');
+        if(activeBlock) {
+          navigator.clipboard.writeText(activeBlock.textContent.trim());
+          const orig = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<i data-lucide="check" style="width:14px;height:14px;margin-right:4px;"></i> Copied';
+          lucide.createIcons();
+          setTimeout(() => { copyBtn.innerHTML = orig; lucide.createIcons(); }, 2000);
+        }
       });
     }
   </script>
